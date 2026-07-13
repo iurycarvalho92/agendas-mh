@@ -1,10 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Acoes: qualquer um pode ler (dashboard público), apenas admins autenticados podem escrever
-    match /acoes/{docId} {
+    match /{document=**} {
       allow read: if true;
-      allow write: if false; // Escrever apenas via Firebase Console ou scripts com service account
+      allow write: if false;
     }
   }
 }
