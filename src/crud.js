@@ -1,8 +1,26 @@
 import { db } from './firebase.js';
-import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { STATUS_CLASS, TIPO_CLASS } from './constants.js';
+import { canEdit, getCurrentUser, getCurrentRole } from './auth.js';
 
-const PIN_CORRETO = 'MH2026';
+async function logAuditEvent(action, itemDescricao, details) {
+  const user = getCurrentUser();
+  if (!user) return;
+  try {
+    await addDoc(collection(db, 'logs'), {
+      action, // 'Criou' | 'Editou' | 'Excluiu'
+      userEmail: user.email,
+      userName: user.displayName || user.email.split('@')[0],
+      photoURL: user.photoURL || '',
+      itemDescricao: itemDescricao || 'Agenda sem título',
+      details: details || '',
+      timestamp: Date.now(),
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    console.warn('Erro ao gravar log de auditoria:', err);
+  }
+}
 
 const TODAS_CATEGORIAS = [
   'Adesivaço',
@@ -81,6 +99,10 @@ export function openViewModal(acao) {
 }
 
 export function openCreateModal() {
+  if (!canEdit()) {
+    alert('🔒 Acesso Restrito\nSeu nível atual é [' + (getCurrentRole() || 'Não logado') + ']. Apenas Admins e Editores podem criar ou alterar agendas.');
+    return;
+  }
   _currentAction = null;
   _isEditing = false;
   _selectedCategories = ['Encontro com lideranças'];
@@ -109,6 +131,10 @@ export function openCreateModal() {
 }
 
 export function openEditModal(acao) {
+  if (!canEdit()) {
+    alert('🔒 Acesso Restrito\nSeu nível atual é [' + (getCurrentRole() || 'Não logado') + ']. Apenas Admins e Editores podem criar ou alterar agendas.');
+    return;
+  }
   _currentAction = acao;
   _isEditing = true;
   _selectedCategories = [...(acao.categorias || [])];
@@ -165,16 +191,6 @@ function renderFormCategories() {
   });
 }
 
-function verifyPin(actionName, callback) {
-  const pin = prompt(`🛡️ Proteção de Segurança\nDigite o PIN de acesso da equipe para ${actionName} (Dica: MH2026):`);
-  if (pin === null) return;
-  if (pin.trim() !== PIN_CORRETO) {
-    alert('❌ PIN Incorreto! A operação foi cancelada.');
-    return;
-  }
-  callback();
-}
-
 export function setupCRUDHandlers() {
   const btnNew = document.getElementById('btn-new-action');
   if (btnNew) btnNew.addEventListener('click', () => openCreateModal());
@@ -185,18 +201,22 @@ export function setupCRUDHandlers() {
   });
 
   const btnDelete = document.getElementById('btn-delete-action');
-  if (btnDelete) btnDelete.addEventListener('click', () => {
+  if (btnDelete) btnDelete.addEventListener('click', async () => {
     if (!_currentAction || !_currentAction.id) return;
-    verifyPin('excluir esta ação', async () => {
-      if (!confirm(`Tem certeza que deseja excluir "${_currentAction.descricao}" do banco Firestore?`)) return;
-      try {
-        await deleteDoc(doc(db, 'acoes', _currentAction.id));
-        document.getElementById('modal-overlay').classList.remove('open');
-      } catch (err) {
-        console.error('Erro ao excluir:', err);
-        alert('Erro ao excluir: ' + err.message);
-      }
-    });
+    if (!canEdit()) {
+      alert('🔒 Acesso Restrito: Apenas Admins e Editores podem excluir agendas.');
+      return;
+    }
+    if (!confirm(`Tem certeza que deseja excluir "${_currentAction.descricao}" do banco Firestore?`)) return;
+    try {
+      const desc = _currentAction.descricao;
+      await deleteDoc(doc(db, 'acoes', _currentAction.id));
+      await logAuditEvent('Excluiu', desc, 'Excluiu a agenda do banco Firestore');
+      document.getElementById('modal-overlay').classList.remove('open');
+    } catch (err) {
+      console.error('Erro ao excluir:', err);
+      alert('Erro ao excluir: ' + err.message);
+    }
   });
 
   const btnCancel = document.getElementById('btn-cancel-form');
@@ -210,55 +230,59 @@ export function setupCRUDHandlers() {
 
   const form = document.getElementById('crud-form');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!canEdit()) {
+        alert('🔒 Acesso Restrito: Apenas Admins e Editores podem criar ou alterar agendas.');
+        return;
+      }
       const descricao = document.getElementById('form-descricao').value.trim();
       if (!descricao) {
         alert('Por favor, informe a descrição da agenda.');
         return;
       }
 
-      verifyPin(_isEditing ? 'salvar edições' : 'cadastrar nova agenda', async () => {
-        const payload = {
-          descricao,
-          tipo: document.getElementById('form-tipo').value,
-          status: document.getElementById('form-status').value,
-          data: document.getElementById('form-data').value || null,
-          local: document.getElementById('form-local').value.trim() || null,
-          sugerido_por: document.getElementById('form-sugerido').value.trim() || null,
-          envolvidos: document.getElementById('form-envolvidos').value.trim() || null,
-          estimativa: document.getElementById('form-estimativa').value.trim() || null,
-          observacoes: document.getElementById('form-observacoes').value.trim() || null,
-          avaliacao: document.getElementById('form-avaliacao').value.trim() || null,
-          categorias: _selectedCategories.length ? _selectedCategories : ['Outros']
-        };
+      const payload = {
+        descricao,
+        tipo: document.getElementById('form-tipo').value,
+        status: document.getElementById('form-status').value,
+        data: document.getElementById('form-data').value || null,
+        local: document.getElementById('form-local').value.trim() || null,
+        sugerido_por: document.getElementById('form-sugerido').value.trim() || null,
+        envolvidos: document.getElementById('form-envolvidos').value.trim() || null,
+        estimativa: document.getElementById('form-estimativa').value.trim() || null,
+        observacoes: document.getElementById('form-observacoes').value.trim() || null,
+        avaliacao: document.getElementById('form-avaliacao').value.trim() || null,
+        categorias: _selectedCategories.length ? _selectedCategories : ['Outros']
+      };
 
-        try {
-          const btnSubmit = document.getElementById('btn-save-form');
-          const originalText = btnSubmit.textContent;
-          btnSubmit.textContent = '⏳ Salvando no Cloud...';
-          btnSubmit.disabled = true;
+      try {
+        const btnSubmit = document.getElementById('btn-save-form');
+        const originalText = btnSubmit.textContent;
+        btnSubmit.textContent = '⏳ Salvando no Cloud...';
+        btnSubmit.disabled = true;
 
-          if (_isEditing && _currentAction && _currentAction.id) {
-            await updateDoc(doc(db, 'acoes', _currentAction.id), payload);
-          } else {
-            const docId = 'acao-' + Date.now();
-            await setDoc(doc(db, 'acoes', docId), payload);
-          }
-
-          btnSubmit.textContent = originalText;
-          btnSubmit.disabled = false;
-          document.getElementById('modal-overlay').classList.remove('open');
-        } catch (err) {
-          console.error('Erro ao salvar no Firestore:', err);
-          alert('Erro ao salvar no Firestore: ' + err.message);
-          const btnSubmit = document.getElementById('btn-save-form');
-          if (btnSubmit) {
-            btnSubmit.textContent = '💾 Salvar no Banco';
-            btnSubmit.disabled = false;
-          }
+        if (_isEditing && _currentAction && _currentAction.id) {
+          await updateDoc(doc(db, 'acoes', _currentAction.id), payload);
+          await logAuditEvent('Editou', payload.descricao, `Atualizou agenda (Status: ${payload.status}, Tipo: ${payload.tipo})`);
+        } else {
+          const docId = 'acao-' + Date.now();
+          await setDoc(doc(db, 'acoes', docId), payload);
+          await logAuditEvent('Criou', payload.descricao, `Nova agenda criada (Status: ${payload.status}, Tipo: ${payload.tipo})`);
         }
-      });
+
+        btnSubmit.textContent = originalText;
+        btnSubmit.disabled = false;
+        document.getElementById('modal-overlay').classList.remove('open');
+      } catch (err) {
+        console.error('Erro ao salvar no Firestore:', err);
+        alert('Erro ao salvar no Firestore: ' + err.message);
+        const btnSubmit = document.getElementById('btn-save-form');
+        if (btnSubmit) {
+          btnSubmit.textContent = '💾 Salvar no Banco';
+          btnSubmit.disabled = false;
+        }
+      }
     });
   }
 }
