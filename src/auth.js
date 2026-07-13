@@ -70,12 +70,9 @@ export function canManageUsers() {
   return _currentRole === 'admin';
 }
 
-export async function loginWithGoogle(useRedirect = false) {
+export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  if (useRedirect) {
-    return signInWithRedirect(auth, provider);
-  }
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user;
@@ -85,58 +82,6 @@ export async function loginWithGoogle(useRedirect = false) {
     if (_redirectErrorCallback) _redirectErrorCallback(err);
     throw err;
   }
-}
-
-export async function loginDirectWithEmail(emailInput) {
-  const emailLower = (emailInput || '').trim().toLowerCase();
-  if (!emailLower || !emailLower.includes('@')) {
-    throw new Error('E-mail inválido. Digite um e-mail válido da equipe.');
-  }
-
-  const mockUser = {
-    uid: 'direct_' + emailLower.replace(/[^a-z0-9]/g, '_'),
-    email: emailLower,
-    displayName: emailLower.split('@')[0],
-    photoURL: ''
-  };
-
-  _currentUser = mockUser;
-
-  const userRef = doc(db, 'users', emailLower);
-  let userDoc = await getDoc(userRef);
-
-  if (DEFAULT_ADMINS.includes(emailLower)) {
-    _currentRole = 'admin';
-    await setDoc(userRef, {
-      email: emailLower,
-      role: 'admin',
-      displayName: mockUser.displayName,
-      photoURL: '',
-      lastLogin: serverTimestamp()
-    }, { merge: true }).catch(() => {});
-  } else if (userDoc.exists()) {
-    const data = userDoc.data();
-    _currentRole = data.role || 'leitor';
-    await updateDoc(userRef, {
-      lastLogin: serverTimestamp()
-    }).catch(() => {});
-  } else {
-    _currentRole = 'leitor';
-    await setDoc(userRef, {
-      email: emailLower,
-      role: 'leitor',
-      displayName: mockUser.displayName,
-      photoURL: '',
-      addedAt: serverTimestamp(),
-      lastLogin: serverTimestamp()
-    }).catch(() => {});
-  }
-
-  await startPresenceSync(mockUser, _currentRole).catch(() => {});
-  if (_activeStateCallback) {
-    _activeStateCallback(_currentUser, _currentRole);
-  }
-  return _currentUser;
 }
 
 export async function logout() {

@@ -6,7 +6,7 @@ import { currentPhase } from './constants.js';
 import { renderKPIs, renderThermometer, renderCharts, renderTimeline, renderTable, setupFilters } from './render.js';
 import { renderGuiaSection, renderEstrategiaSection, renderMonthlyCalendar, renderWeeklyCalendar, renderRoadToElection } from './views.js';
 import { setupCRUDHandlers, openCreateModal } from './crud.js';
-import { loginWithGoogle, loginDirectWithEmail, onRedirectError, logout, initAuthListener, subscribeOnlineUsers, getCurrentRole, getCurrentUser } from './auth.js';
+import { loginWithGoogle, logout, initAuthListener, subscribeOnlineUsers, getCurrentRole, getCurrentUser } from './auth.js';
 import { renderTeamSection } from './team.js';
 
 let _cachedAcoes = [];
@@ -60,24 +60,6 @@ app.innerHTML = `
           <svg class="google-icon-big" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
           <span>Entrar com Gmail (Google)</span>
         </button>
-
-        <div class="login-divider"><span>ou</span></div>
-
-        <button id="btn-login-main-redirect" class="btn-login-redirect" title="Use caso a janela pop-up feche sozinha ou seja bloqueada pelo navegador/celular">
-          <span>⚡ Entrar via Redirecionamento (Sem janela pop-up)</span>
-        </button>
-
-        <div class="login-divider"><span>OU ACESSO DIRETO DE TRABALHO</span></div>
-
-        <div class="direct-login-box">
-          <p class="direct-login-hint">
-            Se o endereço da Vercel não estiver liberado na Google ou a janela estiver fechando, digite seu e-mail para entrar diretamente no painel:
-          </p>
-          <div class="direct-login-input-row">
-            <input type="email" id="input-direct-email" class="direct-login-input" placeholder="seuemail@gmail.com">
-            <button id="btn-login-direct" class="btn-direct-submit">Acessar ➔</button>
-          </div>
-        </div>
       </div>
 
       <div class="login-box-footer">
@@ -616,37 +598,29 @@ function displayDetailedAuthError(err) {
       <div style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:8px; font-size:11px; color:#94a3b8; line-height:1.5;">
         <b>Para liberar o Google OAuth em 30 segundos:</b><br>
         1. Acesse o <a href="https://console.firebase.google.com/project/mh-agenda-campanha-2026/authentication/settings" target="_blank" style="color:#60a5fa; text-decoration:underline; font-weight:bold;">Console do Firebase</a> (Authentication ➔ Configurações ➔ Domínios autorizados).<br>
-        2. Clique no botão <b>Adicionar domínio</b> e cole: <b style="color:#fff; background:#334155; padding:2px 6px; border-radius:4px; user-select:all;">${domain}</b><br>
-        3. <b>Ou se preferir entrar agora sem mexer no console:</b> Digite seu e-mail na caixa de <b>Acesso Direto de Trabalho</b> logo abaixo e clique em Acessar! 👇
+        2. Clique no botão <b>Adicionar domínio</b> e cole: <b style="color:#fff; background:#334155; padding:2px 6px; border-radius:4px; user-select:all;">${domain}</b>
       </div>
     `;
   } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
     errBox.innerHTML = `
       <div style="font-weight:900; color:#fbbf24; font-size:13px; margin-bottom:4px;">⚠️ JANELA DO GOOGLE FOI FECHADA</div>
       <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
-        A janela pop-up fechou antes da conclusão (comum no Safari ou se o domínio <b>${domain}</b> não estiver no Authorized Domains do Firebase).<br>
-        👉 <b>Dica rápida:</b> Use a caixa de <b>Acesso Direto de Trabalho</b> com seu e-mail logo abaixo para entrar instantaneamente sem pop-up!
+        A janela pop-up fechou antes da conclusão ou foi cancelada. Tente clicar em <b>Entrar com Gmail (Google)</b> novamente!
       </div>
     `;
   } else if (code === 'auth/popup-blocked') {
     errBox.innerHTML = `
       <div style="font-weight:900; color:#fbbf24; font-size:13px; margin-bottom:4px;">⚠️ POP-UP BLOQUEADO PELO NAVEGADOR</div>
-      <div style="font-size:12px; color:#cbd5e1;">O seu navegador impediu a abertura da janela. Use o <b>Acesso Direto com E-mail</b> na caixa abaixo para entrar sem pop-up!</div>
+      <div style="font-size:12px; color:#cbd5e1;">O seu navegador impediu a abertura da janela. Desbloqueie pop-ups para este site e tente novamente.</div>
     `;
   } else {
     errBox.innerHTML = `
       <div style="font-weight:900; color:#f87171; font-size:13px; margin-bottom:4px;">⚠️ ERRO NA AUTENTICAÇÃO (${code || 'Falha'})</div>
       <div style="font-size:12px; color:#cbd5e1;">${err.message || err.toString()}</div>
-      <div style="margin-top:6px; font-size:11px; color:#94a3b8;">👉 Você também pode usar a caixa de <b>Acesso Direto de Trabalho</b> com seu e-mail logo abaixo!</div>
     `;
   }
   errBox.style.display = 'block';
 }
-
-// Ouvir erros que aconteceram no retorno do redirecionamento
-onRedirectError((err) => {
-  displayDetailedAuthError(err);
-});
 
 initAuthListener((user, role) => {
   renderAuthBar(user, role);
@@ -659,11 +633,8 @@ initAuthListener((user, role) => {
     if (dashboard) dashboard.style.display = 'none';
     if (loginScreen) loginScreen.style.display = 'flex';
 
-    // Vincular botões da tela de login
+    // Vincular botão da tela de login Google
     const btnPopup = document.getElementById('btn-login-main-popup');
-    const btnRedirect = document.getElementById('btn-login-main-redirect');
-    const btnDirect = document.getElementById('btn-login-direct');
-    const inputDirect = document.getElementById('input-direct-email');
     const errBox = document.getElementById('login-error-msg');
 
     if (btnPopup && !btnPopup.dataset.bound) {
@@ -671,56 +642,10 @@ initAuthListener((user, role) => {
       btnPopup.addEventListener('click', async () => {
         if (errBox) errBox.style.display = 'none';
         try {
-          await loginWithGoogle(false);
+          await loginWithGoogle();
         } catch (err) {
           displayDetailedAuthError(err);
         }
-      });
-    }
-
-    if (btnRedirect && !btnRedirect.dataset.bound) {
-      btnRedirect.dataset.bound = 'true';
-      btnRedirect.addEventListener('click', async () => {
-        if (errBox) errBox.style.display = 'none';
-        try {
-          await loginWithGoogle(true);
-        } catch (err) {
-          displayDetailedAuthError(err);
-        }
-      });
-    }
-
-    const triggerDirectLogin = async () => {
-      const emailVal = (inputDirect ? inputDirect.value : '').trim();
-      if (!emailVal) {
-        if (errBox) {
-          errBox.innerHTML = `<div style="font-weight:bold; color:#fbbf24; font-size:12px;">⚠️ DIGITE SEU E-MAIL</div><div style="font-size:11px; color:#cbd5e1;">Por favor, informe seu e-mail da equipe (ex: iury.decarvalho@gmail.com) para entrar no painel.</div>`;
-          errBox.style.display = 'block';
-        }
-        return;
-      }
-      if (errBox) errBox.style.display = 'none';
-      try {
-        if (btnDirect) btnDirect.innerText = 'Autenticando...';
-        await loginDirectWithEmail(emailVal);
-      } catch (err) {
-        if (btnDirect) btnDirect.innerText = 'Acessar ➔';
-        if (errBox) {
-          errBox.innerHTML = `<div style="font-weight:bold; color:#f87171; font-size:12px;">⚠️ ERRO NO ACESSO DIRETO</div><div style="font-size:11px; color:#cbd5e1;">${err.message || err}</div>`;
-          errBox.style.display = 'block';
-        }
-      }
-    };
-
-    if (btnDirect && !btnDirect.dataset.bound) {
-      btnDirect.dataset.bound = 'true';
-      btnDirect.addEventListener('click', triggerDirectLogin);
-    }
-
-    if (inputDirect && !inputDirect.dataset.bound) {
-      inputDirect.dataset.bound = 'true';
-      inputDirect.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') triggerDirectLogin();
       });
     }
   } else {
