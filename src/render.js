@@ -93,7 +93,7 @@ export function renderThermometer(acoes) {
           <div class="balance-row-values">
             <span style="color:${b.color}">${b.pct}% real</span>
             <span>meta: ${b.meta}%</span>
-            <span style="color:${ok ? '#4ade80' : '#f97316'}">${diff >= 0 ? '+' : ''}${diff}pp</span>
+            <span style="color:${ok ? 'var(--green3)' : '#f97316'}">${diff >= 0 ? '+' : ''}${diff}pp</span>
           </div>
         </div>
         <div class="balance-track">
@@ -113,8 +113,18 @@ export function renderThermometer(acoes) {
 
 // ── Charts ────────────────────────────────────────────────────────────────────
 
+function getChartColors() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  return {
+    ticksText: isLight ? '#0f172a' : '#86efac',
+    ticksMuted: isLight ? '#64748b' : '#6b7a70',
+    gridColor: isLight ? 'rgba(203,213,225,0.6)' : 'rgba(30,50,40,0.8)'
+  };
+}
+
 export function renderCharts(acoes) {
   destroyCharts();
+  const colors = getChartColors();
 
   // Tipo
   const tipoC = countBy(acoes, 'tipo');
@@ -125,7 +135,7 @@ export function renderCharts(acoes) {
       labels: tipoL,
       datasets: [{ data: tipoL.map(k => tipoC[k]), backgroundColor: tipoL.map((_, i) => PALETTE[i % PALETTE.length] + 'cc'), borderColor: tipoL.map((_, i) => PALETTE[i % PALETTE.length]), borderWidth: 1, borderRadius: 6 }],
     },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#6b7a70', font: { family: 'Inter', size: 11 } }, grid: { color: 'rgba(30,50,40,0.8)' } }, y: { ticks: { color: '#86efac', font: { family: 'Inter', size: 11 } }, grid: { display: false } } }, animation: { duration: 1000 } },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: colors.ticksMuted, font: { family: 'Inter', size: 11 } }, grid: { color: colors.gridColor } }, y: { ticks: { color: colors.ticksText, font: { family: 'Inter', size: 11 } }, grid: { display: false } } }, animation: { duration: 1000 } },
   });
 
   // Status
@@ -135,7 +145,7 @@ export function renderCharts(acoes) {
   charts.status = new Chart(document.getElementById('chart-status'), {
     type: 'doughnut',
     data: { labels: stL, datasets: [{ data: stL.map(k => stC[k]), backgroundColor: stL.map(k => (stCols[k] || '#888') + 'bb'), borderColor: stL.map(k => stCols[k] || '#888'), borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: '#86efac', font: { family: 'Inter', size: 10 }, padding: 10, boxWidth: 10 } } }, animation: { animateRotate: true, duration: 1200 } },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: colors.ticksText, font: { family: 'Inter', size: 10 }, padding: 10, boxWidth: 10 } } }, animation: { animateRotate: true, duration: 1200 } },
   });
 
   // Categorias (multi-categoria)
@@ -147,7 +157,7 @@ export function renderCharts(acoes) {
       labels: catE.map(([k]) => k.length > 18 ? k.slice(0, 16) + '…' : k),
       datasets: [{ data: catE.map(([, v]) => v), backgroundColor: catE.map((_, i) => PALETTE[i % PALETTE.length] + 'bb'), borderColor: catE.map((_, i) => PALETTE[i % PALETTE.length]), borderWidth: 1, borderRadius: 6 }],
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => catE[items[0].dataIndex][0] } } }, scales: { x: { ticks: { color: '#6b7a70', font: { family: 'Inter', size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#6b7a70', font: { family: 'Inter', size: 11 }, stepSize: 1 }, grid: { color: 'rgba(30,50,40,0.8)' } } }, animation: { duration: 1000 } },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => catE[items[0].dataIndex][0] } } }, scales: { x: { ticks: { color: colors.ticksMuted, font: { family: 'Inter', size: 9 } }, grid: { display: false } }, y: { ticks: { color: colors.ticksMuted, font: { family: 'Inter', size: 11 }, stepSize: 1 }, grid: { color: colors.gridColor } } }, animation: { duration: 1000 } },
   });
 }
 

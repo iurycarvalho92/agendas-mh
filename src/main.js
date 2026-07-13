@@ -69,7 +69,7 @@ app.innerHTML = `
           <select id="overview-date-preset" class="filter-select">
             <option value="all">Período Completo (Todas as datas)</option>
             <option value="next-30">Próximos 30 Dias</option>
-            <option value="month-curr">Este Mês (Agosto 2026)</option>
+            <option value="month-curr">Este Mês (${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })})</option>
             <option value="pre-camp">Fase 1: Pré-Campanha (Até 15/08)</option>
             <option value="camp-ativa">Fase 2: Campanha Ativa (15/08 a 18/09)</option>
             <option value="reta-final">Fase 3: Reta Final (19/09 a 06/10)</option>
@@ -286,7 +286,10 @@ function filterAcoesByOverviewDate(acoes) {
       return dt >= now && dt <= future;
     }
     if (_overviewDateState.preset === 'month-curr') {
-      return raw.startsWith('2026-08');
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      return raw.startsWith(`${y}-${m}`);
     }
     if (_overviewDateState.preset === 'pre-camp') {
       return dt <= new Date(2026, 7, 15);

@@ -228,8 +228,9 @@ export function renderEstrategiaSection() {
 
 // ── Calendário Mensal ───────────────────────────────────────────────────────
 
-let _curYear = 2026;
-let _curMonth = 7; // 0-indexed (7 = Agosto)
+const nowInit = new Date();
+let _curYear = nowInit.getFullYear();
+let _curMonth = nowInit.getMonth();
 
 export function renderMonthlyCalendar(acoes, filter = {}) {
   const container = document.getElementById('view-mes');
@@ -287,7 +288,7 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
       <div class="cal-title">📅 ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</div>
       <div class="cal-nav">
         <button class="cal-nav-btn" id="cal-prev-month">◀ Mês Anterior</button>
-        <button class="cal-nav-btn" id="cal-today-month">Agosto 2026</button>
+        <button class="cal-nav-btn" id="cal-today-month">Mês Atual (${nowInit.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })})</button>
         <button class="cal-nav-btn" id="cal-next-month">Próximo Mês ▶</button>
       </div>
     </div>
@@ -309,7 +310,9 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
     renderMonthlyCalendar(acoes, filter);
   });
   document.getElementById('cal-today-month').addEventListener('click', () => {
-    _curYear = 2026; _curMonth = 7; // Agosto 2026
+    const d = new Date();
+    _curYear = d.getFullYear();
+    _curMonth = d.getMonth();
     renderMonthlyCalendar(acoes, filter);
   });
 
@@ -324,7 +327,15 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
 
 // ── Calendário Semanal ──────────────────────────────────────────────────────
 
-let _curWeekStart = new Date(2026, 7, 10); // Segunda, 10/08/2026
+function getMondayOfCurrentWeek() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(d.setDate(diff));
+  mon.setHours(0, 0, 0, 0);
+  return mon;
+}
+let _curWeekStart = getMondayOfCurrentWeek();
 
 export function renderWeeklyCalendar(acoes, filter = {}) {
   const container = document.getElementById('view-semana');
@@ -389,7 +400,7 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
       <div class="cal-title">📆 Semana de ${startLabel} a ${endLabel}</div>
       <div class="cal-nav">
         <button class="cal-nav-btn" id="week-prev">◀ Semana Anterior</button>
-        <button class="cal-nav-btn" id="week-today">Semana Atual (10/08)</button>
+        <button class="cal-nav-btn" id="week-today">Semana Atual (${getMondayOfCurrentWeek().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})</button>
         <button class="cal-nav-btn" id="week-next">Próxima Semana ▶</button>
       </div>
     </div>
@@ -407,7 +418,7 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
     renderWeeklyCalendar(acoes, filter);
   });
   document.getElementById('week-today').addEventListener('click', () => {
-    _curWeekStart = new Date(2026, 7, 10);
+    _curWeekStart = getMondayOfCurrentWeek();
     renderWeeklyCalendar(acoes, filter);
   });
 

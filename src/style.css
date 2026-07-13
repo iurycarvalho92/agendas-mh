@@ -30,6 +30,71 @@
 [data-theme="light"] body::before {
   background-image: linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
 }
+[data-theme="light"] .views-title,
+[data-theme="light"] .guia-card-title,
+[data-theme="light"] .criterio-header,
+[data-theme="light"] .cal-title,
+[data-theme="light"] .week-day-num,
+[data-theme="light"] .week-event-desc,
+[data-theme="light"] .road-hero-title,
+[data-theme="light"] .road-card-desc,
+[data-theme="light"] .kpi-value,
+[data-theme="light"] .modal-title {
+  color: var(--text);
+}
+[data-theme="light"] .badge.em-construcao {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+[data-theme="light"] .badge.realizada { color: #15803d; background: rgba(22, 163, 74, 0.12); border-color: rgba(22, 163, 74, 0.3); }
+[data-theme="light"] .badge.sugerida { color: #1d4ed8; background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); }
+[data-theme="light"] .badge.confirmada { color: #047857; background: rgba(5, 150, 105, 0.12); border-color: rgba(5, 150, 105, 0.3); }
+[data-theme="light"] .badge.adiada { color: #c2410c; background: rgba(234, 88, 12, 0.12); border-color: rgba(234, 88, 12, 0.3); }
+[data-theme="light"] .badge.cancelada { color: #b91c1c; background: rgba(220, 38, 38, 0.12); border-color: rgba(220, 38, 38, 0.3); }
+[data-theme="light"] .badge.tipo-rel { color: #7e22ce; background: rgba(147, 51, 234, 0.12); border-color: rgba(147, 51, 234, 0.3); }
+[data-theme="light"] .badge.tipo-mob { color: #c2410c; background: rgba(234, 88, 12, 0.12); border-color: rgba(234, 88, 12, 0.3); }
+[data-theme="light"] .badge.tipo-part { color: #1d4ed8; background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); }
+[data-theme="light"] .badge.tipo-ter { color: #15803d; background: rgba(22, 163, 74, 0.12); border-color: rgba(22, 163, 74, 0.3); }
+[data-theme="light"] .badge.tipo-com { color: #047857; background: rgba(5, 150, 105, 0.12); border-color: rgba(5, 150, 105, 0.3); }
+[data-theme="light"] .cat-chip { color: #0f766e; background: rgba(13, 148, 136, 0.12); border-color: rgba(13, 148, 136, 0.3); }
+[data-theme="light"] .timeline-date { color: #15803d; background: rgba(22, 163, 74, 0.12); }
+[data-theme="light"] .timeline-date.urgente { color: #c2410c; background: rgba(234, 88, 12, 0.12); }
+[data-theme="light"] .timeline-date.breve { color: #b45309; background: rgba(245, 158, 11, 0.15); }
+[data-theme="light"] .modal-observacao {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+[data-theme="light"] .road-card-date {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.15);
+}
+[data-theme="light"] .cal-day.has-events {
+  background: rgba(15, 23, 42, 0.03);
+}
+[data-theme="light"] .cal-event-chip {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+[data-theme="light"] .cal-event-chip:hover {
+  background: #e2e8f0;
+}
+[data-theme="light"] .week-event-card {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .road-card {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+[data-theme="light"] .guia-list,
+[data-theme="light"] .card-pilar p,
+[data-theme="light"] .modal-avaliacao,
+[data-theme="light"] .criterio-item p {
+  color: #334155;
+}
+
 
 html { scroll-behavior: smooth; }
 body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; overflow-x: hidden; }
