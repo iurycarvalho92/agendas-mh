@@ -139,10 +139,12 @@ const unsub = onSnapshot(
     const acoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (acoes.length === 0) {
-      // Banco vazio → seed automático na primeira execução
-      console.log('Firestore vazio → populando com dados da planilha...');
-      seedFirestore().then(() => console.log('Seed concluído!'));
-      // onSnapshot vai reagir ao seed automaticamente
+      console.log('Firestore vazio → exibindo dados iniciais (seed)...');
+      renderAll(SEED_ACOES);
+      showDashboard();
+      seedFirestore().catch(err => {
+        console.warn('Aviso: seed no Firestore bloqueado por regras de segurança (somente leitura no cliente):', err.message);
+      });
       return;
     }
 
@@ -151,7 +153,6 @@ const unsub = onSnapshot(
   },
   err => {
     console.error('Firestore error:', err);
-    // Fallback: usa dados locais se Firestore estiver inacessível
     console.warn('Usando dados locais como fallback...');
     renderAll(SEED_ACOES);
     showDashboard();
