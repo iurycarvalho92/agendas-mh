@@ -139,12 +139,9 @@ const unsub = onSnapshot(
     const acoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (acoes.length === 0) {
-      console.log('Firestore vazio → exibindo dados iniciais (seed)...');
+      console.log('Firestore vazio → exibindo dados iniciais locais...');
       renderAll(SEED_ACOES);
       showDashboard();
-      seedFirestore().catch(err => {
-        console.warn('Aviso: seed no Firestore bloqueado por regras de segurança (somente leitura no cliente):', err.message);
-      });
       return;
     }
 
