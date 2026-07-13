@@ -1,5 +1,5 @@
 import { openViewModal } from './crud.js';
-import { STATUS_CLASS, TIPO_CLASS } from './constants.js';
+import { STATUS_CLASS, TIPO_CLASS, fmtDate } from './constants.js';
 
 function badge(text, cls) {
   return `<span class="badge ${cls || ''}">${text || '—'}</span>`;

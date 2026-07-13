@@ -10,6 +10,7 @@ import { setupCRUDHandlers, openCreateModal } from './crud.js';
 let _cachedAcoes = [];
 let _activeViewMode = 'lista';
 let _currentFilterState = {};
+let _overviewDateState = { preset: 'all', start: '', end: '' };
 
 // ── Seed automático ───────────────────────────────────────────────────────────
 
@@ -47,6 +48,10 @@ app.innerHTML = `
         <button class="btn-new-action" id="btn-new-action">➕ Nova Agenda / Sugestão</button>
         <div class="phase-badge"><div class="phase-dot"></div><span id="phase-label"></span></div>
         <div class="date-badge" id="date-badge"></div>
+        <div class="theme-toggle" id="theme-toggle" title="Alternar visual Claro / Escuro">
+          <button class="theme-btn active" data-theme="dark">🌙 Escuro</button>
+          <button class="theme-btn" data-theme="light">☀️ Claro</button>
+        </div>
       </div>
     </header>
 
@@ -57,7 +62,26 @@ app.innerHTML = `
     </nav>
 
     <div id="section-dashboard" class="nav-section active">
-      <div class="section-title">Visão Geral</div>
+      <div class="overview-header-row">
+        <div class="section-title" style="margin:0">Visão Geral & Indicadores</div>
+        <div class="overview-date-controls">
+          <span class="overview-date-label">📅 Recorte do Período:</span>
+          <select id="overview-date-preset" class="filter-select">
+            <option value="all">Período Completo (Todas as datas)</option>
+            <option value="next-30">Próximos 30 Dias</option>
+            <option value="month-curr">Este Mês (Agosto 2026)</option>
+            <option value="pre-camp">Fase 1: Pré-Campanha (Até 15/08)</option>
+            <option value="camp-ativa">Fase 2: Campanha Ativa (15/08 a 18/09)</option>
+            <option value="reta-final">Fase 3: Reta Final (19/09 a 06/10)</option>
+            <option value="custom">Personalizado (Escolher datas)...</option>
+          </select>
+          <div id="overview-custom-dates" class="custom-date-box" style="display:none">
+            <input type="date" id="overview-date-start" class="date-input" title="Data Inicial" />
+            <span>a</span>
+            <input type="date" id="overview-date-end" class="date-input" title="Data Final" />
+          </div>
+        </div>
+      </div>
       <div class="kpi-grid" id="kpi-grid"></div>
 
       <div class="section-title">Termômetro Estratégico</div>
@@ -245,6 +269,96 @@ setupFilters(_cachedAcoes, (acoes, filterState) => {
   updateActiveViews(acoes, filterState);
 });
 
+// ── Lógica de Recorte de Data na Visão Geral ──────────────────────────────────
+function filterAcoesByOverviewDate(acoes) {
+  if (!_overviewDateState || _overviewDateState.preset === 'all') return acoes;
+
+  return acoes.filter(a => {
+    if (!a.data) return false;
+    const raw = a.data.split(' ')[0].split('T')[0];
+    const dt = new Date(raw + 'T12:00:00');
+
+    if (_overviewDateState.preset === 'next-30') {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const future = new Date(now);
+      future.setDate(future.getDate() + 30);
+      return dt >= now && dt <= future;
+    }
+    if (_overviewDateState.preset === 'month-curr') {
+      return raw.startsWith('2026-08');
+    }
+    if (_overviewDateState.preset === 'pre-camp') {
+      return dt <= new Date(2026, 7, 15);
+    }
+    if (_overviewDateState.preset === 'camp-ativa') {
+      return dt > new Date(2026, 7, 15) && dt <= new Date(2026, 8, 18);
+    }
+    if (_overviewDateState.preset === 'reta-final') {
+      return dt > new Date(2026, 8, 18) && dt <= new Date(2026, 9, 6);
+    }
+    if (_overviewDateState.preset === 'custom') {
+      if (_overviewDateState.start && raw < _overviewDateState.start) return false;
+      if (_overviewDateState.end && raw > _overviewDateState.end) return false;
+      return true;
+    }
+    return true;
+  });
+}
+
+function updateOverviewSection() {
+  if (!_cachedAcoes) return;
+  const filtered = filterAcoesByOverviewDate(_cachedAcoes);
+  renderKPIs(filtered);
+  renderThermometer(filtered);
+  renderCharts(filtered);
+  renderTimeline(filtered);
+}
+
+const overviewPresetSelect = document.getElementById('overview-date-preset');
+const overviewCustomBox = document.getElementById('overview-custom-dates');
+const overviewDateStart = document.getElementById('overview-date-start');
+const overviewDateEnd = document.getElementById('overview-date-end');
+
+if (overviewPresetSelect) {
+  overviewPresetSelect.addEventListener('change', () => {
+    _overviewDateState.preset = overviewPresetSelect.value;
+    if (_overviewDateState.preset === 'custom') {
+      overviewCustomBox.style.display = 'flex';
+    } else {
+      overviewCustomBox.style.display = 'none';
+    }
+    updateOverviewSection();
+  });
+}
+if (overviewDateStart && overviewDateEnd) {
+  const handleCustomDateChange = () => {
+    _overviewDateState.start = overviewDateStart.value;
+    _overviewDateState.end = overviewDateEnd.value;
+    if (_overviewDateState.preset === 'custom') {
+      updateOverviewSection();
+    }
+  };
+  overviewDateStart.addEventListener('change', handleCustomDateChange);
+  overviewDateEnd.addEventListener('change', handleCustomDateChange);
+}
+
+// ── Lógica de Alternância de Tema (Claro / Escuro) ─────────────────────────────
+const savedTheme = localStorage.getItem('mh_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  if (btn.dataset.theme === savedTheme) btn.classList.add('active');
+  else btn.classList.remove('active');
+
+  btn.addEventListener('click', () => {
+    const theme = btn.dataset.theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('mh_theme', theme);
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+    if (_cachedAcoes) renderCharts(filterAcoesByOverviewDate(_cachedAcoes));
+  });
+});
+
 // Navegação de Abas Principais (Dashboard vs Guia vs Estratégia)
 document.querySelectorAll('.main-nav .nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -297,10 +411,7 @@ function updateActiveViews(acoes, filter) {
 
 function renderAll(acoes) {
   _cachedAcoes = acoes;
-  renderKPIs(acoes);
-  renderThermometer(acoes);
-  renderCharts(acoes);
-  renderTimeline(acoes);
+  updateOverviewSection();
   updateActiveViews(acoes, _currentFilterState);
 }
 
