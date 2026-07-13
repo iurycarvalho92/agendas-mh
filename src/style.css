@@ -467,6 +467,37 @@ footer { border-top: 1px solid var(--border); padding-top: 24px; display: flex; 
 [data-theme="light"] .log-item { background: #f8fafc; border-color: #e2e8f0; }
 [data-theme="light"] .log-title { color: #0f172a; }
 
+/* ── Full-Screen Login Page ── */
+.login-screen { position: fixed; inset: 0; background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; animation: fade-in .3s ease; }
+.login-box-container { max-width: 440px; width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; }
+.login-box-header { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.login-box-logo { background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; font-weight: 900; font-size: 16px; padding: 8px 16px; border-radius: 99px; letter-spacing: .08em; box-shadow: 0 4px 14px rgba(249,115,22,.4); margin-bottom: 8px; }
+.login-box-title { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -.02em; margin: 0; }
+.login-box-subtitle { font-size: 14px; font-weight: 600; color: #94a3b8; margin: 0; }
+.login-box-card { background: rgba(30,41,59,.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 24px; padding: 36px 28px; width: 100%; display: flex; flex-direction: column; align-items: center; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+.login-box-icon { font-size: 42px; margin-bottom: 12px; }
+.login-box-card h2 { font-size: 20px; font-weight: 800; color: #fff; margin: 0 0 8px 0; }
+.login-box-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0 0 24px 0; max-width: 320px; }
+.login-error-msg { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; padding: 12px; border-radius: 12px; font-size: 12px; line-height: 1.4; margin-bottom: 16px; width: 100%; text-align: left; }
+.btn-login-main { width: 100%; background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; padding: 14px 20px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+.btn-login-main:hover { background: #f8fafc; border-color: #94a3b8; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.google-icon-big { width: 22px; height: 22px; flex-shrink: 0; }
+.login-divider { display: flex; align-items: center; width: 100%; margin: 20px 0; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.login-divider::before, .login-divider::after { content: ""; flex: 1; border-bottom: 1px solid rgba(255,255,255,.1); }
+.login-divider span { padding: 0 12px; }
+.btn-login-redirect { width: 100%; background: rgba(255,255,255,.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,.15); padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-login-redirect:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; }
+.login-box-footer { font-size: 12px; color: #64748b; }
+
+[data-theme="light"] .login-screen { background: radial-gradient(circle at 50% 20%, #f8fafc 0%, #e2e8f0 100%); }
+[data-theme="light"] .login-box-title { color: #0f172a; }
+[data-theme="light"] .login-box-subtitle { color: #64748b; }
+[data-theme="light"] .login-box-card { background: rgba(255,255,255,.9); border-color: #cbd5e1; box-shadow: 0 20px 50px rgba(0,0,0,.1); }
+[data-theme="light"] .login-box-card h2 { color: #0f172a; }
+[data-theme="light"] .login-box-desc { color: #475569; }
+[data-theme="light"] .btn-login-redirect { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+[data-theme="light"] .btn-login-redirect:hover { background: #e2e8f0; color: #0f172a; }
+
 /* ── Animations ── */
 @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }

@@ -34,8 +34,43 @@ app.innerHTML = `
   <div id="loading-screen">
     <div class="loader-inner">
       <div class="loader-logo">MH</div>
-      <div class="loader-text">Conectando ao banco de dados...</div>
+      <div class="loader-text">Verificando autenticação segura...</div>
       <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <div id="login-screen" class="login-screen" style="display:none">
+    <div class="login-box-container">
+      <div class="login-box-header">
+        <div class="login-box-logo">MH 2026</div>
+        <h1 class="login-box-title">Agenda de Campanha</h1>
+        <p class="login-box-subtitle">Deputada Estadual Marina Helou • SP</p>
+      </div>
+      
+      <div class="login-box-card">
+        <div class="login-box-icon">🔐</div>
+        <h2>Acesso ao Painel Estratégico</h2>
+        <p class="login-box-desc">
+          Por favor, faça login com o seu e-mail do Gmail (cadastrado na equipe) para acessar as agendas, sugestões e indicadores de trabalho.
+        </p>
+        
+        <div id="login-error-msg" class="login-error-msg" style="display:none"></div>
+
+        <button id="btn-login-main-popup" class="btn-login-main">
+          <svg class="google-icon-big" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          <span>Entrar com Gmail (Google)</span>
+        </button>
+
+        <div class="login-divider"><span>ou</span></div>
+
+        <button id="btn-login-main-redirect" class="btn-login-redirect" title="Use caso a janela pop-up feche sozinha ou seja bloqueada pelo navegador/celular">
+          <span>⚡ Entrar via Redirecionamento (Sem janela pop-up)</span>
+        </button>
+      </div>
+
+      <div class="login-box-footer">
+        <span>Sistema de Trabalho e Estratégia • 2026</span>
+      </div>
     </div>
   </div>
 
@@ -426,7 +461,15 @@ function renderAll(acoes) {
 }
 
 function showDashboard() {
+  const user = getCurrentUser();
+  if (!user) {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.querySelector('.dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
   document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
   document.querySelector('.dashboard').style.display = 'block';
 }
 
@@ -496,7 +539,7 @@ function renderAuthBar(user, role) {
     }
   } else {
     authWrap.innerHTML = `
-      <button id="btn-google-login" class="btn-google-login">
+      <button id="btn-google-login" class="btn-google-login" title="Acesse com sua conta do Google">
         <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
         <span>Entrar com Gmail</span>
       </button>
@@ -504,10 +547,10 @@ function renderAuthBar(user, role) {
     const btnLogin = document.getElementById('btn-google-login');
     if (btnLogin) {
       btnLogin.addEventListener('click', async () => {
-        try {
-          await loginWithGoogle();
-        } catch (e) {
-          console.error('Erro no Google Login:', e);
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) {
+          document.querySelector('.dashboard').style.display = 'none';
+          loginScreen.style.display = 'flex';
         }
       });
     }
@@ -547,9 +590,74 @@ function renderOnlineTeamBar(onlineUsers) {
 
 initAuthListener((user, role) => {
   renderAuthBar(user, role);
-  const activeBtn = document.querySelector('.main-nav .nav-btn.active');
-  if (activeBtn && activeBtn.dataset.section === 'equipe') {
-    renderTeamSection();
+  const loadingScreen = document.getElementById('loading-screen');
+  const loginScreen = document.getElementById('login-screen');
+  const dashboard = document.querySelector('.dashboard');
+
+  if (!user) {
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'none';
+    if (loginScreen) loginScreen.style.display = 'flex';
+
+    // Vincular botões da tela de login
+    const btnPopup = document.getElementById('btn-login-main-popup');
+    const btnRedirect = document.getElementById('btn-login-main-redirect');
+    const errBox = document.getElementById('login-error-msg');
+
+    if (btnPopup && !btnPopup.dataset.bound) {
+      btnPopup.dataset.bound = 'true';
+      btnPopup.addEventListener('click', async () => {
+        if (errBox) errBox.style.display = 'none';
+        try {
+          await loginWithGoogle(false);
+        } catch (err) {
+          console.error('Falha no popup:', err);
+          if (errBox) {
+            let msg = 'Falha ao abrir a janela de login (Popup). ';
+            if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+              msg = '⚠️ A janela do Google fechou antes de concluir. Tente novamente ou clique em "Entrar via Redirecionamento" abaixo!';
+            } else if (err.code === 'auth/popup-blocked') {
+              msg = '⚠️ O navegador bloqueou a janela pop-up. Clique no botão "Entrar via Redirecionamento" logo abaixo!';
+            } else if (err.code === 'auth/unauthorized-domain') {
+              msg = '⚠️ Domínio não autorizado no Firebase Authentication (Console -> Authentication -> Settings -> Authorized domains). Adicione o domínio da sua Vercel no Console do Firebase ou clique em Redirecionamento.';
+            } else {
+              msg += (err.message || err.code || '');
+            }
+            errBox.innerText = msg;
+            errBox.style.display = 'block';
+          }
+        }
+      });
+    }
+
+    if (btnRedirect && !btnRedirect.dataset.bound) {
+      btnRedirect.dataset.bound = 'true';
+      btnRedirect.addEventListener('click', async () => {
+        if (errBox) errBox.style.display = 'none';
+        try {
+          await loginWithGoogle(true);
+        } catch (err) {
+          console.error('Falha no redirecionamento:', err);
+          if (errBox) {
+            errBox.innerText = 'Erro ao tentar redirecionar: ' + (err.message || err.code);
+            errBox.style.display = 'block';
+          }
+        }
+      });
+    }
+  } else {
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (_cachedAcoes && _cachedAcoes.length > 0) {
+      showDashboard();
+    } else {
+      if (loadingScreen) loadingScreen.style.display = 'flex';
+      if (dashboard) dashboard.style.display = 'none';
+    }
+
+    const activeBtn = document.querySelector('.main-nav .nav-btn.active');
+    if (activeBtn && activeBtn.dataset.section === 'equipe') {
+      renderTeamSection();
+    }
   }
 });
 

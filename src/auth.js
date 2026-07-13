@@ -2,6 +2,8 @@ import { auth, db } from './firebase.js';
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -14,6 +16,13 @@ import {
   onSnapshot, 
   serverTimestamp 
 } from 'firebase/firestore';
+
+// Verificar se houve retorno de redirecionamento do Google
+getRedirectResult(auth).catch(err => {
+  if (err && err.code !== 'auth/popup-closed-by-user') {
+    console.error('Erro ao retornar do redirecionamento do Google:', err);
+  }
+});
 
 // Administradores Supremos por padrão
 const DEFAULT_ADMINS = [
@@ -45,14 +54,17 @@ export function canManageUsers() {
   return _currentRole === 'admin';
 }
 
-export async function loginWithGoogle() {
+export async function loginWithGoogle(useRedirect = false) {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  if (useRedirect) {
+    return signInWithRedirect(auth, provider);
+  }
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (err) {
-    console.error('Erro no login com Google:', err);
+    console.error('Erro no login com Google (Popup):', err);
     throw err;
   }
 }
