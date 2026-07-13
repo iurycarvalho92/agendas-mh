@@ -1,5 +1,6 @@
 import { Chart, registerables } from 'chart.js';
 import { PALETTE, TIPO_FRENTE, TIPO_CLASS, STATUS_CLASS, currentPhase, countBy, countCats, parseDate, fmtDate, FASES } from './constants.js';
+import { openViewModal } from './crud.js';
 
 Chart.register(...registerables);
 
@@ -192,20 +193,22 @@ export function renderTimeline(acoes) {
 
   // Attach click → modal
   grid.querySelectorAll('.timeline-card').forEach((card, i) => {
-    card.addEventListener('click', () => openModal(withDate[i]));
+    card.addEventListener('click', () => openViewModal(withDate[i]));
   });
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
 
 let _allAcoes = [];
+let _filterState = {};
 
 export function renderTable(acoes, filter = {}) {
   _allAcoes = acoes;
   applyFilter(filter);
 }
 
-function applyFilter(filter = {}) {
+export function applyFilter(filter = {}) {
+  _filterState = filter;
   const search = (filter.search || '').toLowerCase();
   const tipo = filter.tipo || '';
   const status = filter.status || '';
@@ -217,6 +220,8 @@ function applyFilter(filter = {}) {
   });
 
   const tbody = document.getElementById('table-body');
+  if (!tbody) return;
+
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" class="no-data">Nenhuma ação encontrada.</td></tr>';
     return;
@@ -235,56 +240,48 @@ function applyFilter(filter = {}) {
   `).join('');
 
   tbody.querySelectorAll('tr').forEach((tr, i) => {
-    tr.addEventListener('click', () => openModal(filtered[i]));
+    tr.addEventListener('click', () => openViewModal(filtered[i]));
   });
 }
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
+export function setupFilters(acoes, onFilterChange) {
+  _allAcoes = acoes;
+  const searchInput = document.getElementById('search-input');
+  const filterTipo = document.getElementById('filter-tipo');
+  const filterStatus = document.getElementById('filter-status');
 
-export function openModal(a) {
-  document.getElementById('modal-title').textContent = a.descricao;
-  document.getElementById('modal-badges').innerHTML = [
-    a.status ? badge(a.status, STATUS_CLASS[a.status] || '') : '',
-    a.tipo ? badge(a.tipo, TIPO_CLASS[a.tipo] || '') : '',
-  ].join('');
+  if (searchInput) {
+    searchInput.oninput = e => {
+      _filterState.search = e.target.value;
+      applyFilter(_filterState);
+      if (onFilterChange) onFilterChange(_allAcoes, _filterState);
+    };
+  }
+  if (filterTipo) {
+    filterTipo.onchange = e => {
+      _filterState.tipo = e.target.value;
+      applyFilter(_filterState);
+      if (onFilterChange) onFilterChange(_allAcoes, _filterState);
+    };
+  }
+  if (filterStatus) {
+    filterStatus.onchange = e => {
+      _filterState.status = e.target.value;
+      applyFilter(_filterState);
+      if (onFilterChange) onFilterChange(_allAcoes, _filterState);
+    };
+  }
 
-  const fields = [
-    ['Local', a.local || '—'],
-    ['Data', a.data ? fmtDate(a.data) || '—' : '—'],
-    ['Sugerido por', a.sugerido_por || '—'],
-    ['Envolvidos', a.envolvidos || '—'],
-    ['Público estimado', a.estimativa || '—'],
-  ];
-  document.getElementById('modal-grid').innerHTML = fields.map(([l, v]) => `
-    <div class="modal-field">
-      <div class="modal-field-label">${l}</div>
-      <div class="modal-field-value">${v}</div>
-    </div>
-  `).join('');
-
-  const cats = a.categorias || [];
-  document.getElementById('modal-cats-wrap').innerHTML = cats.length
-    ? `<div class="modal-divider"></div><div class="modal-field-label" style="margin-bottom:8px">Categorias</div><div class="modal-cats">${cats.map(c => `<span class="cat-chip" style="font-size:11px;padding:4px 10px">${c}</span>`).join('')}</div>`
-    : '';
-
-  document.getElementById('modal-obs-wrap').innerHTML = a.observacoes
-    ? `<div class="modal-divider"></div><div class="modal-field-label" style="margin-bottom:8px">⚠️ Observações</div><div class="modal-observacao">${a.observacoes}</div>`
-    : '';
-
-  document.getElementById('modal-aval-wrap').innerHTML = a.avaliacao
-    ? `<div class="modal-divider"></div><div class="modal-field-label" style="margin-bottom:8px">💬 Avaliação</div><div class="modal-avaliacao">${a.avaliacao}</div>`
-    : '';
-
-  document.getElementById('modal-overlay').classList.add('open');
+  const modalClose = document.getElementById('modal-close');
+  const modalOverlay = document.getElementById('modal-overlay');
+  if (modalClose) modalClose.onclick = () => modalOverlay.classList.remove('open');
+  if (modalOverlay) {
+    modalOverlay.onclick = e => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    };
+  }
+  document.onkeydown = e => {
+    if (e.key === 'Escape' && modalOverlay) modalOverlay.classList.remove('open');
+  };
 }
 
-export function setupFilters(acoes) {
-  let filterState = {};
-  document.getElementById('search-input').addEventListener('input', e => { filterState.search = e.target.value; applyFilter(filterState); });
-  document.getElementById('filter-tipo').addEventListener('change', e => { filterState.tipo = e.target.value; applyFilter(filterState); });
-  document.getElementById('filter-status').addEventListener('change', e => { filterState.status = e.target.value; applyFilter(filterState); });
-
-  document.getElementById('modal-close').addEventListener('click', () => document.getElementById('modal-overlay').classList.remove('open'));
-  document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('modal-overlay').classList.remove('open'); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open'); });
-}
