@@ -17,12 +17,28 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 
+// Armazenar último erro e callback
+let _lastRedirectError = null;
+let _redirectErrorCallback = null;
+let _activeStateCallback = null;
+
 // Verificar se houve retorno de redirecionamento do Google
 getRedirectResult(auth).catch(err => {
   if (err && err.code !== 'auth/popup-closed-by-user') {
     console.error('Erro ao retornar do redirecionamento do Google:', err);
+    _lastRedirectError = err;
+    if (_redirectErrorCallback) {
+      _redirectErrorCallback(err);
+    }
   }
 });
+
+export function onRedirectError(cb) {
+  _redirectErrorCallback = cb;
+  if (_lastRedirectError) {
+    cb(_lastRedirectError);
+  }
+}
 
 // Administradores Supremos por padrão
 const DEFAULT_ADMINS = [
@@ -65,20 +81,80 @@ export async function loginWithGoogle(useRedirect = false) {
     return result.user;
   } catch (err) {
     console.error('Erro no login com Google (Popup):', err);
+    _lastRedirectError = err;
+    if (_redirectErrorCallback) _redirectErrorCallback(err);
     throw err;
   }
+}
+
+export async function loginDirectWithEmail(emailInput) {
+  const emailLower = (emailInput || '').trim().toLowerCase();
+  if (!emailLower || !emailLower.includes('@')) {
+    throw new Error('E-mail inválido. Digite um e-mail válido da equipe.');
+  }
+
+  const mockUser = {
+    uid: 'direct_' + emailLower.replace(/[^a-z0-9]/g, '_'),
+    email: emailLower,
+    displayName: emailLower.split('@')[0],
+    photoURL: ''
+  };
+
+  _currentUser = mockUser;
+
+  const userRef = doc(db, 'users', emailLower);
+  let userDoc = await getDoc(userRef);
+
+  if (DEFAULT_ADMINS.includes(emailLower)) {
+    _currentRole = 'admin';
+    await setDoc(userRef, {
+      email: emailLower,
+      role: 'admin',
+      displayName: mockUser.displayName,
+      photoURL: '',
+      lastLogin: serverTimestamp()
+    }, { merge: true }).catch(() => {});
+  } else if (userDoc.exists()) {
+    const data = userDoc.data();
+    _currentRole = data.role || 'leitor';
+    await updateDoc(userRef, {
+      lastLogin: serverTimestamp()
+    }).catch(() => {});
+  } else {
+    _currentRole = 'leitor';
+    await setDoc(userRef, {
+      email: emailLower,
+      role: 'leitor',
+      displayName: mockUser.displayName,
+      photoURL: '',
+      addedAt: serverTimestamp(),
+      lastLogin: serverTimestamp()
+    }).catch(() => {});
+  }
+
+  await startPresenceSync(mockUser, _currentRole).catch(() => {});
+  if (_activeStateCallback) {
+    _activeStateCallback(_currentUser, _currentRole);
+  }
+  return _currentUser;
 }
 
 export async function logout() {
   try {
     await stopPresenceSync();
-    await signOut(auth);
+    _currentUser = null;
+    _currentRole = null;
+    await signOut(auth).catch(() => {});
+    if (_activeStateCallback) {
+      _activeStateCallback(null, null);
+    }
   } catch (err) {
     console.error('Erro no logout:', err);
   }
 }
 
 export function initAuthListener(onStateChangeCallback) {
+  _activeStateCallback = onStateChangeCallback;
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
       _currentUser = user;
