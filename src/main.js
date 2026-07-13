@@ -1,6 +1,6 @@
 import './style.css';
 import { db } from './firebase.js';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { seedFirestore, ACOES as SEED_ACOES } from './data.js';
 import { currentPhase } from './constants.js';
 import { renderKPIs, renderThermometer, renderCharts, renderTimeline, renderTable, setupFilters } from './render.js';
@@ -131,7 +131,7 @@ function showError(msg) {
   `;
 }
 
-const q = query(collection(db, 'acoes'), orderBy('status'));
+const q = query(collection(db, 'acoes'));
 
 const unsub = onSnapshot(
   q,
