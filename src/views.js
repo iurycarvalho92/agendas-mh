@@ -278,7 +278,7 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
           ${dayActions.map(a => {
             const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
             const prioCfg = getPrioridadeConfig(a.prioridade);
-            return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" title="${a.descricao} (${prioCfg.text})">
+            return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" data-status="${a.status || ''}" title="${a.descricao} (${prioCfg.text})">
               <span class="cal-event-prio-tag">${prioCfg.icon}</span> <span class="cal-event-chip-title">${a.descricao}</span>
             </div>`;
           }).join('')}
@@ -388,7 +388,7 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
           ${dayActions.length ? dayActions.map(a => {
             const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
             return `
-              <div class="week-event-card" style="border-left:3px solid ${stCol}" data-id="${a.id}">
+              <div class="week-event-card" style="border-left:3px solid ${stCol}" data-id="${a.id}" data-status="${a.status || ''}">
                 <div class="week-event-desc">${a.descricao}</div>
                 ${a.local ? `<div class="week-event-local">📍 ${a.local}</div>` : ''}
                 <div class="week-event-badges">
@@ -484,7 +484,7 @@ export function renderRoadToElection(acoes, filter = {}) {
 
   function renderCard(a) {
     return `
-      <div class="road-card" data-id="${a.id}">
+      <div class="road-card" data-id="${a.id}" data-status="${a.status || ''}">
         <div class="road-card-top">
           <div class="road-card-desc">${a.descricao}</div>
           <div class="road-card-date">${a.data ? fmtDate(a.data) : 'Data a definir'}</div>
@@ -532,7 +532,7 @@ export function renderRoadToElection(acoes, filter = {}) {
             ${dayActions.map(a => {
               const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
               const prioCfg = getPrioridadeConfig(a.prioridade);
-              return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" title="${a.descricao} (${prioCfg.text})">
+              return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" data-status="${a.status || ''}" title="${a.descricao} (${prioCfg.text})">
                 <span class="cal-event-prio-tag">${prioCfg.icon}</span> <span class="cal-event-chip-title">${a.descricao}</span>
               </div>`;
             }).join('')}

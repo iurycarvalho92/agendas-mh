@@ -161,49 +161,37 @@ export function renderCharts(acoes) {
   });
 }
 
-// ── Timeline ──────────────────────────────────────────────────────────────────
+// ── Sugestões ──────────────────────────────────────────────────────────────────
 
-export function renderTimeline(acoes) {
-  const today = new Date();
-  const withDate = acoes
-    .filter(a => a.data)
-    .map(a => ({ ...a, _dt: parseDate(a.data) }))
-    .filter(a => a._dt && a._dt >= today)
-    .sort((a, b) => a._dt - b._dt);
-
-  const grid = document.getElementById('timeline-grid');
-  if (!withDate.length) {
-    grid.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:24px 0">Nenhuma ação futura com data definida.</div>';
+export function renderSugestoesSemData(acoes) {
+  const sugestoes = acoes.filter(a => !a.data || a.status === 'Sugerida' || a.status === 'Em Construção');
+  const grid = document.getElementById('sugestoes-grid');
+  if (!grid) return;
+  if (!sugestoes.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:24px 0">Nenhuma agenda sugerida, em confirmação ou sem data no momento.</div>';
     return;
   }
 
-  grid.innerHTML = withDate.map((a, i) => {
-    const days = Math.ceil((a._dt - today) / (1000 * 60 * 60 * 24));
-    const uc = days <= 7 ? 'urgente' : days <= 21 ? 'breve' : '';
-    const up = Math.max(5, Math.min(100, 100 - days * 1.2));
-    const urgColor = uc === 'urgente' ? '#f97316' : uc === 'breve' ? '#f59e0b' : '#22c55e';
+  grid.innerHTML = sugestoes.map((a, i) => {
     return `
-      <div class="timeline-card" style="animation-delay:${i * 0.07}s" data-id="${a.id || i}">
-        <div class="timeline-card-top">
-          <div class="timeline-card-desc">${a.descricao}</div>
-          <div class="timeline-date ${uc}">${a._dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</div>
+      <div class="sugestao-card" style="animation-delay:${i * 0.05}s" data-status="${a.status || ''}" data-id="${a.id || i}">
+        <div class="sugestao-card-top">
+          <div class="sugestao-card-desc">${a.descricao}</div>
+          <div class="sugestao-card-date">${a.data ? fmtDate(a.data) : '🗓️ Data a definir'}</div>
         </div>
-        <div class="timeline-meta">
+        <div class="sugestao-meta">
+          ${renderPrioridadeBadge(a.prioridade)}
           ${badge(a.status, STATUS_CLASS[a.status] || '')}
           ${a.tipo ? badge(a.tipo, TIPO_CLASS[a.tipo] || '') : ''}
           ${a.estimativa ? `<span class="badge" style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)">👥 ${a.estimativa}</span>` : ''}
         </div>
-        ${a.local ? `<div class="timeline-local">📍 ${a.local}</div>` : ''}
-        <div class="urgency-bar"><div class="urgency-fill" style="width:0%;background:${urgColor}" data-pct="${up}"></div></div>
+        ${a.local ? `<div class="sugestao-local">📍 ${a.local}</div>` : ''}
       </div>
     `;
   }).join('');
 
-  setTimeout(() => { grid.querySelectorAll('.urgency-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; }); }, 300);
-
-  // Attach click → modal
-  grid.querySelectorAll('.timeline-card').forEach((card, i) => {
-    card.addEventListener('click', () => openViewModal(withDate[i]));
+  grid.querySelectorAll('.sugestao-card').forEach((card, i) => {
+    card.addEventListener('click', () => openViewModal(sugestoes[i]));
   });
 }
 
@@ -240,7 +228,7 @@ export function applyFilter(filter = {}) {
   }
 
   tbody.innerHTML = filtered.map(a => `
-    <tr data-id="${a.id || ''}">
+    <tr data-id="${a.id || ''}" data-status="${a.status || ''}">
       <td><div class="td-desc-text" title="${a.descricao}">${a.descricao}</div></td>
       <td class="td-local">${a.local ? '📍 ' + a.local : '—'}</td>
       <td>${badge(a.tipo || '—', TIPO_CLASS[a.tipo] || '')}</td>

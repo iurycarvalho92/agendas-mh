@@ -38,9 +38,25 @@
 [data-theme="light"] .week-event-desc,
 [data-theme="light"] .road-hero-title,
 [data-theme="light"] .road-card-desc,
+[data-theme="light"] .road-month-title,
+[data-theme="light"] .road-phase-title,
+[data-theme="light"] .cal-day-num,
+[data-theme="light"] .cal-event-chip-title,
+[data-theme="light"] .sugestao-card-desc,
 [data-theme="light"] .kpi-value,
 [data-theme="light"] .modal-title {
-  color: var(--text);
+  color: var(--text) !important;
+}
+[data-theme="light"] .road-month-title {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-left: 4px solid #2563eb !important;
+}
+[data-theme="light"] .cal-day.election-day {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: #dc2626 !important;
+}
+[data-theme="light"] .cal-day.election-day .cal-day-num {
+  color: #dc2626 !important;
 }
 [data-theme="light"] .badge.em-construcao {
   color: #b45309;
@@ -194,19 +210,36 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .chip { font-size: 10px; font-weight: 600; background: rgba(34,197,94,.1); color: var(--green3); padding: 2px 8px; border-radius: 100px; margin-left: auto; }
 .chart-wrap { position: relative; height: 220px; }
 
-/* ── Timeline ── */
-.timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 36px; }
-.timeline-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; animation: fade-up .5s ease both; }
-.timeline-card:hover { transform: translateY(-2px); border-color: var(--border2); box-shadow: 0 8px 32px rgba(0,0,0,.5); }
-.timeline-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.timeline-card-desc { font-size: 13px; font-weight: 600; line-height: 1.4; flex: 1; }
-.timeline-date { font-size: 11px; font-weight: 700; color: var(--green3); white-space: nowrap; background: rgba(74,222,128,.08); padding: 3px 8px; border-radius: 6px; }
-.timeline-date.urgente { color: var(--orange); background: rgba(249,115,22,.1); }
-.timeline-date.breve { color: var(--amber); background: rgba(245,158,11,.1); }
-.timeline-meta { display: flex; flex-wrap: wrap; gap: 6px; }
-.timeline-local { font-size: 11px; color: var(--muted); }
-.urgency-bar { height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.urgency-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+/* ── Sugestões & Sem Data ── */
+.sugestoes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 36px; }
+.sugestao-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; animation: fade-up .5s ease both; }
+.sugestao-card:hover { transform: translateY(-2px); border-color: var(--border2); box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+.sugestao-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.sugestao-card-desc { font-size: 13px; font-weight: 600; line-height: 1.4; flex: 1; color: var(--text); }
+.sugestao-card-date { font-size: 11px; font-weight: 700; color: #60a5fa; white-space: nowrap; background: rgba(59,130,246,.12); padding: 3px 8px; border-radius: 6px; }
+.sugestao-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.sugestao-local { font-size: 11px; color: var(--muted); }
+
+/* ── Status Card & Chip Visual Borders ── */
+tr[data-status="Realizada"],
+.cal-event-chip[data-status="Realizada"],
+.week-event-card[data-status="Realizada"],
+.road-card[data-status="Realizada"],
+.sugestao-card[data-status="Realizada"] {
+  border: 2px solid #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+tr[data-status="Confirmada"],
+.cal-event-chip[data-status="Confirmada"],
+.week-event-card[data-status="Confirmada"],
+.road-card[data-status="Confirmada"],
+.sugestao-card[data-status="Confirmada"] {
+  border-left: 4px solid #10b981 !important;
+  border-top: 2px solid #10b981 !important;
+  border-bottom: 2px solid #10b981 !important;
+  border-right: 1px dashed rgba(16, 185, 129, 0.45) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
 
 /* ── Badges ── */
 .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; text-transform: uppercase; white-space: nowrap; }
@@ -350,14 +383,14 @@ td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
 .road-phase-count { font-size: 12px; font-weight: 600; color: var(--text2); background: var(--bg); padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); }
 .road-phase-calendars { display: flex; flex-direction: column; gap: 24px; }
 .road-month-block { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-.road-month-title { font-size: 14px; font-weight: 800; color: #fff; background: rgba(255,255,255,.03); padding: 8px 14px; border-radius: 8px; border-left: 3px solid #60a5fa; letter-spacing: .02em; }
+.road-month-title { font-size: 14px; font-weight: 800; color: var(--text); background: rgba(255,255,255,.03); padding: 8px 14px; border-radius: 8px; border-left: 3px solid #60a5fa; letter-spacing: .02em; }
 .cal-day.election-day { border: 2px solid #ef4444 !important; background: rgba(239,68,68,.1) !important; }
 .cal-day.election-day .cal-day-num { color: #f87171 !important; font-size: 12px !important; }
 .road-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .road-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; }
 .road-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
 .road-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
-.road-card-desc { font-weight: 600; font-size: 13px; color: #fff; line-height: 1.4; flex: 1; }
+.road-card-desc { font-weight: 600; font-size: 13px; color: var(--text); line-height: 1.4; flex: 1; }
 .road-card-date { font-size: 11px; font-weight: 700; color: #60a5fa; background: rgba(59,130,246,.15); padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
 .road-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .road-card-local { font-size: 11px; color: var(--muted); }

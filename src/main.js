@@ -3,7 +3,7 @@ import { db } from './firebase.js';
 import { collection, onSnapshot, query, doc, setDoc } from 'firebase/firestore';
 import { ACOES as SEED_ACOES } from './data.js';
 import { currentPhase } from './constants.js';
-import { renderKPIs, renderThermometer, renderCharts, renderTimeline, renderTable, setupFilters } from './render.js';
+import { renderKPIs, renderThermometer, renderCharts, renderSugestoesSemData, renderTable, setupFilters } from './render.js';
 import { renderGuiaSection, renderEstrategiaSection, renderMonthlyCalendar, renderWeeklyCalendar, renderRoadToElection } from './views.js';
 import { setupCRUDHandlers, openCreateModal } from './crud.js';
 import { loginWithGoogle, logout, initAuthListener, subscribeOnlineUsers, getCurrentRole, getCurrentUser } from './auth.js';
@@ -137,8 +137,8 @@ app.innerHTML = `
         <div class="chart-card"><div class="chart-card-title">🗂️ Ações por Categoria <span class="chip">Multi-categoria</span></div><div class="chart-wrap"><canvas id="chart-categoria"></canvas></div></div>
       </div>
 
-      <div class="section-title">Próximas Ações com Data</div>
-      <div class="timeline-grid" id="timeline-grid"></div>
+      <div class="section-title">💡 Agendas Sugeridas, Em Confirmação & Sem Data</div>
+      <div class="sugestoes-grid" id="sugestoes-grid"></div>
 
       <div class="section-header-row" style="margin-top:32px">
         <div class="section-title" style="margin:0">Todas as Ações</div>
@@ -364,7 +364,7 @@ function updateOverviewSection() {
   renderKPIs(filtered);
   renderThermometer(filtered);
   renderCharts(filtered);
-  renderTimeline(filtered);
+  renderSugestoesSemData(filtered);
 }
 
 const overviewPresetSelect = document.getElementById('overview-date-preset');
