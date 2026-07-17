@@ -159,6 +159,12 @@ app.innerHTML = `
           <option value="">Todos os tipos</option>
           <option>Mobilização</option><option>Relacionamento</option><option>Participação em Eventos</option><option>Comunicação</option><option>Território</option>
         </select>
+        <select class="filter-select" id="filter-prioridade">
+          <option value="">Todas as prioridades</option>
+          <option value="alta">🔥 Alta</option>
+          <option value="media">⚡ Média</option>
+          <option value="baixa">🍃 Baixa</option>
+        </select>
         <select class="filter-select" id="filter-status">
           <option value="">Todos os status</option>
           <option>Sugerida</option><option>Em Construção</option><option>Confirmada</option><option>Realizada</option><option>Adiada</option><option>Cancelada</option>
@@ -169,7 +175,7 @@ app.innerHTML = `
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Descrição</th><th>Local</th><th>Tipo</th><th>Categoria(s)</th><th>Status</th><th>Data</th><th>Público Est.</th>
+              <th>Descrição</th><th>Local</th><th>Tipo</th><th>Categoria(s)</th><th>Prioridade</th><th>Status</th><th>Data</th><th>Público Est.</th>
             </tr></thead>
             <tbody id="table-body"></tbody>
           </table>
@@ -222,7 +228,7 @@ app.innerHTML = `
               <input type="text" id="form-descricao" placeholder="Ex.: Roda de conversa sobre saúde e primeira infância..." required />
             </div>
           </div>
-          <div class="form-row grid-2">
+          <div class="form-row grid-3">
             <div class="form-group">
               <label>Tipo (Frente de Campanha)</label>
               <select id="form-tipo">
@@ -231,6 +237,14 @@ app.innerHTML = `
                 <option value="Participação em Eventos">Participação em Eventos</option>
                 <option value="Comunicação">Comunicação</option>
                 <option value="Território">Território</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Prioridade</label>
+              <select id="form-prioridade">
+                <option value="media">⚡ Média</option>
+                <option value="alta">🔥 Alta</option>
+                <option value="baixa">🍃 Baixa</option>
               </select>
             </div>
             <div class="form-group">

@@ -47,6 +47,24 @@ export const STATUS_CLASS = {
   Cancelada: 'cancelada',
 };
 
+export const PRIORIDADE_CONFIG = {
+  alta: { label: '🔥 Alta', class: 'prio-alta', badgeClass: 'badge-alta', text: 'Alta', icon: '🔥' },
+  media: { label: '⚡ Média', class: 'prio-media', badgeClass: 'badge-media', text: 'Média', icon: '⚡' },
+  baixa: { label: '🍃 Baixa', class: 'prio-baixa', badgeClass: 'badge-baixa', text: 'Baixa', icon: '🍃' },
+};
+
+export function getPrioridadeConfig(prio) {
+  const p = (prio || 'media').toLowerCase();
+  if (p === 'alta' || p === 'a') return PRIORIDADE_CONFIG.alta;
+  if (p === 'baixa' || p === 'b') return PRIORIDADE_CONFIG.baixa;
+  return PRIORIDADE_CONFIG.media;
+}
+
+export function renderPrioridadeBadge(prio) {
+  const cfg = getPrioridadeConfig(prio);
+  return `<span class="badge ${cfg.badgeClass}" title="Prioridade: ${cfg.text}">${cfg.label}</span>`;
+}
+
 export const PALETTE = [
   '#22c55e', '#f97316', '#3b82f6', '#a855f7',
   '#f59e0b', '#10b981', '#ef4444', '#06b6d4',

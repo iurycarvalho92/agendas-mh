@@ -1,5 +1,5 @@
 import { openViewModal } from './crud.js';
-import { STATUS_CLASS, TIPO_CLASS, fmtDate } from './constants.js';
+import { STATUS_CLASS, TIPO_CLASS, fmtDate, getPrioridadeConfig, renderPrioridadeBadge } from './constants.js';
 
 function badge(text, cls) {
   return `<span class="badge ${cls || ''}">${text || '—'}</span>`;
@@ -241,7 +241,8 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
     const search = (filter.search || '').toLowerCase();
     const catsStr = (a.categorias || []).join(' ').toLowerCase();
     const mS = !search || (a.descricao || '').toLowerCase().includes(search) || (a.local || '').toLowerCase().includes(search) || catsStr.includes(search);
-    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status);
+    const mPrio = !filter.prioridade || (a.prioridade || 'media').toLowerCase() === filter.prioridade;
+    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status) && mPrio;
   });
 
   const firstDay = new Date(_curYear, _curMonth, 1);
@@ -276,7 +277,10 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
         <div class="cal-events">
           ${dayActions.map(a => {
             const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
-            return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}">${a.descricao}</div>`;
+            const prioCfg = getPrioridadeConfig(a.prioridade);
+            return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" title="${a.descricao} (${prioCfg.text})">
+              <span class="cal-event-prio-tag">${prioCfg.icon}</span> <span class="cal-event-chip-title">${a.descricao}</span>
+            </div>`;
           }).join('')}
         </div>
       </div>
@@ -345,7 +349,8 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
     const search = (filter.search || '').toLowerCase();
     const catsStr = (a.categorias || []).join(' ').toLowerCase();
     const mS = !search || (a.descricao || '').toLowerCase().includes(search) || (a.local || '').toLowerCase().includes(search) || catsStr.includes(search);
-    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status);
+    const mPrio = !filter.prioridade || (a.prioridade || 'media').toLowerCase() === filter.prioridade;
+    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status) && mPrio;
   });
 
   const days = [];
@@ -386,7 +391,10 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
               <div class="week-event-card" style="border-left:3px solid ${stCol}" data-id="${a.id}">
                 <div class="week-event-desc">${a.descricao}</div>
                 ${a.local ? `<div class="week-event-local">📍 ${a.local}</div>` : ''}
-                <div class="week-event-badges">${badge(a.status, STATUS_CLASS[a.status] || '')}</div>
+                <div class="week-event-badges">
+                  ${renderPrioridadeBadge(a.prioridade)}
+                  ${badge(a.status, STATUS_CLASS[a.status] || '')}
+                </div>
               </div>
             `;
           }).join('') : `<div class="week-empty">Sem agenda</div>`}
@@ -448,7 +456,8 @@ export function renderRoadToElection(acoes, filter = {}) {
     const search = (filter.search || '').toLowerCase();
     const catsStr = (a.categorias || []).join(' ').toLowerCase();
     const mS = !search || (a.descricao || '').toLowerCase().includes(search) || (a.local || '').toLowerCase().includes(search) || catsStr.includes(search);
-    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status);
+    const mPrio = !filter.prioridade || (a.prioridade || 'media').toLowerCase() === filter.prioridade;
+    return mS && (!filter.tipo || a.tipo === filter.tipo) && (!filter.status || a.status === filter.status) && mPrio;
   });
 
   // Agrupar por fase da campanha
@@ -473,7 +482,70 @@ export function renderRoadToElection(acoes, filter = {}) {
     }
   });
 
+  function renderCard(a) {
+    return `
+      <div class="road-card" data-id="${a.id}">
+        <div class="road-card-top">
+          <div class="road-card-desc">${a.descricao}</div>
+          <div class="road-card-date">${a.data ? fmtDate(a.data) : 'Data a definir'}</div>
+        </div>
+        <div class="road-card-meta">
+          ${renderPrioridadeBadge(a.prioridade)}
+          ${badge(a.status, STATUS_CLASS[a.status] || '')}
+          ${a.tipo ? badge(a.tipo, TIPO_CLASS[a.tipo] || '') : ''}
+          ${a.local ? `<span class="road-card-local">📍 ${a.local}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
   function renderRoadGroup(title, list, color, dateSpan) {
+    if (!list.length) {
+      return `
+        <div class="road-phase" style="border-top:3px solid ${color}">
+          <div class="road-phase-header">
+            <div>
+              <div class="road-phase-title" style="color:${color}">${title}</div>
+              <div class="road-phase-span">${dateSpan}</div>
+            </div>
+            <div class="road-phase-count">0 agendadas</div>
+          </div>
+          <div class="road-empty">Nenhuma ação cadastrada para este período ainda.</div>
+        </div>
+      `;
+    }
+
+    // Ordenar cronologicamente por data
+    const sorted = [...list].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
+    // Agrupar por dia (YYYY-MM-DD)
+    const byDay = {};
+    sorted.forEach(a => {
+      const rawDate = (a.data || '').split(' ')[0].split('T')[0];
+      if (!byDay[rawDate]) byDay[rawDate] = [];
+      byDay[rawDate].push(a);
+    });
+
+    const dayGroupsHtml = Object.keys(byDay).map(rawDate => {
+      const dayActions = byDay[rawDate];
+      const [y, m, d] = rawDate.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d, 12, 0, 0);
+      const weekdayStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+      const dayFormatted = `${weekdayStr.charAt(0).toUpperCase() + weekdayStr.slice(1)}, ${fmtDate(rawDate)}`;
+
+      return `
+        <div class="road-day-group">
+          <div class="road-day-header">
+            <span class="road-day-icon">📅</span>
+            <span class="road-day-title">${dayFormatted}</span>
+          </div>
+          <div class="road-cards">
+            ${dayActions.map(a => renderCard(a)).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
     return `
       <div class="road-phase" style="border-top:3px solid ${color}">
         <div class="road-phase-header">
@@ -483,20 +555,8 @@ export function renderRoadToElection(acoes, filter = {}) {
           </div>
           <div class="road-phase-count">${list.length} agendadas</div>
         </div>
-        <div class="road-cards">
-          ${list.length ? list.map(a => `
-            <div class="road-card" data-id="${a.id}">
-              <div class="road-card-top">
-                <div class="road-card-desc">${a.descricao}</div>
-                <div class="road-card-date">${fmtDate(a.data)}</div>
-              </div>
-              <div class="road-card-meta">
-                ${badge(a.status, STATUS_CLASS[a.status] || '')}
-                ${a.tipo ? badge(a.tipo, TIPO_CLASS[a.tipo] || '') : ''}
-                ${a.local ? `<span class="road-card-local">📍 ${a.local}</span>` : ''}
-              </div>
-            </div>
-          `).join('') : `<div class="road-empty">Nenhuma ação cadastrada para este período ainda.</div>`}
+        <div class="road-phase-days">
+          ${dayGroupsHtml}
         </div>
       </div>
     `;
@@ -541,18 +601,7 @@ export function renderRoadToElection(acoes, filter = {}) {
           <div class="road-phase-count">${semData.length} pendentes</div>
         </div>
         <div class="road-cards">
-          ${semData.map(a => `
-            <div class="road-card" data-id="${a.id}">
-              <div class="road-card-top">
-                <div class="road-card-desc">${a.descricao}</div>
-                <div class="road-card-date" style="color:var(--amber)">Data a definir</div>
-              </div>
-              <div class="road-card-meta">
-                ${badge(a.status, STATUS_CLASS[a.status] || '')}
-                ${a.tipo ? badge(a.tipo, TIPO_CLASS[a.tipo] || '') : ''}
-              </div>
-            </div>
-          `).join('')}
+          ${semData.map(a => renderCard(a)).join('')}
         </div>
       </div>
     ` : ''}

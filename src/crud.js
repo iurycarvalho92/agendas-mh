@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
 import { doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { STATUS_CLASS, TIPO_CLASS } from './constants.js';
+import { STATUS_CLASS, TIPO_CLASS, renderPrioridadeBadge } from './constants.js';
 import { canEdit, getCurrentUser, getCurrentRole } from './auth.js';
 
 async function logAuditEvent(action, itemDescricao, details) {
@@ -66,6 +66,7 @@ export function openViewModal(acao) {
   document.getElementById('modal-badges').innerHTML = [
     acao.status ? badge(acao.status, STATUS_CLASS[acao.status] || '') : '',
     acao.tipo ? badge(acao.tipo, TIPO_CLASS[acao.tipo] || '') : '',
+    renderPrioridadeBadge(acao.prioridade),
   ].join('');
 
   const fields = [
@@ -117,6 +118,7 @@ export function openCreateModal() {
     descricao: '',
     tipo: 'Mobilização',
     status: 'Sugerida',
+    prioridade: 'media',
     data: '',
     local: '',
     sugerido_por: '',
@@ -152,6 +154,9 @@ function fillFormFields(data) {
   document.getElementById('form-descricao').value = data.descricao || '';
   document.getElementById('form-tipo').value = data.tipo || 'Mobilização';
   document.getElementById('form-status').value = data.status || 'Sugerida';
+  if (document.getElementById('form-prioridade')) {
+    document.getElementById('form-prioridade').value = (data.prioridade || 'media').toLowerCase();
+  }
   
   let dateVal = '';
   if (data.data) {
@@ -246,6 +251,7 @@ export function setupCRUDHandlers() {
         descricao,
         tipo: document.getElementById('form-tipo').value,
         status: document.getElementById('form-status').value,
+        prioridade: document.getElementById('form-prioridade') ? document.getElementById('form-prioridade').value : 'media',
         data: document.getElementById('form-data').value || null,
         local: document.getElementById('form-local').value.trim() || null,
         sugerido_por: document.getElementById('form-sugerido').value.trim() || null,

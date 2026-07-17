@@ -1,5 +1,5 @@
 import { Chart, registerables } from 'chart.js';
-import { PALETTE, TIPO_FRENTE, TIPO_CLASS, STATUS_CLASS, currentPhase, countBy, countCats, parseDate, fmtDate, FASES } from './constants.js';
+import { PALETTE, TIPO_FRENTE, TIPO_CLASS, STATUS_CLASS, currentPhase, countBy, countCats, parseDate, fmtDate, FASES, renderPrioridadeBadge } from './constants.js';
 import { openViewModal } from './crud.js';
 
 Chart.register(...registerables);
@@ -222,18 +222,20 @@ export function applyFilter(filter = {}) {
   const search = (filter.search || '').toLowerCase();
   const tipo = filter.tipo || '';
   const status = filter.status || '';
+  const prioridade = filter.prioridade || '';
 
   const filtered = _allAcoes.filter(a => {
     const catsStr = (a.categorias || []).join(' ').toLowerCase();
     const mS = !search || (a.descricao || '').toLowerCase().includes(search) || (a.local || '').toLowerCase().includes(search) || catsStr.includes(search);
-    return mS && (!tipo || a.tipo === tipo) && (!status || a.status === status);
+    const mPrio = !prioridade || (a.prioridade || 'media').toLowerCase() === prioridade;
+    return mS && (!tipo || a.tipo === tipo) && (!status || a.status === status) && mPrio;
   });
 
   const tbody = document.getElementById('table-body');
   if (!tbody) return;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="no-data">Nenhuma ação encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data">Nenhuma ação encontrada.</td></tr>';
     return;
   }
 
@@ -243,6 +245,7 @@ export function applyFilter(filter = {}) {
       <td class="td-local">${a.local ? '📍 ' + a.local : '—'}</td>
       <td>${badge(a.tipo || '—', TIPO_CLASS[a.tipo] || '')}</td>
       <td><div class="td-cats">${(a.categorias || []).map(catChip).join('')}</div></td>
+      <td>${renderPrioridadeBadge(a.prioridade)}</td>
       <td>${badge(a.status || '—', STATUS_CLASS[a.status] || '')}</td>
       <td class="td-local">${a.data ? fmtDate(a.data) || '—' : '—'}</td>
       <td class="td-local">${a.estimativa || '—'}</td>
@@ -259,6 +262,7 @@ export function setupFilters(acoes, onFilterChange) {
   const searchInput = document.getElementById('search-input');
   const filterTipo = document.getElementById('filter-tipo');
   const filterStatus = document.getElementById('filter-status');
+  const filterPrioridade = document.getElementById('filter-prioridade');
 
   if (searchInput) {
     searchInput.oninput = e => {
@@ -270,6 +274,13 @@ export function setupFilters(acoes, onFilterChange) {
   if (filterTipo) {
     filterTipo.onchange = e => {
       _filterState.tipo = e.target.value;
+      applyFilter(_filterState);
+      if (onFilterChange) onFilterChange(_allAcoes, _filterState);
+    };
+  }
+  if (filterPrioridade) {
+    filterPrioridade.onchange = e => {
+      _filterState.prioridade = e.target.value;
       applyFilter(_filterState);
       if (onFilterChange) onFilterChange(_allAcoes, _filterState);
     };
