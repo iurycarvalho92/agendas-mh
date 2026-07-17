@@ -269,11 +269,16 @@ export function renderMonthlyCalendar(acoes, filter = {}) {
     cellsHtml += `<div class="cal-day empty"></div>`;
   }
 
+  const todayDate = new Date();
+  const todayIso = todayDate.toISOString().split('T')[0];
+
   for (let d = 1; d <= totalDays; d++) {
     const dayActions = byDay[d] || [];
+    const isoThisDay = `${_curYear}-${String(_curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = isoThisDay === todayIso;
     cellsHtml += `
-      <div class="cal-day ${dayActions.length ? 'has-events' : ''}">
-        <div class="cal-day-num">${d}</div>
+      <div class="cal-day ${dayActions.length ? 'has-events' : ''} ${isToday ? 'today' : ''}">
+        <div class="cal-day-num">${isToday ? `📍 Hoje (${d})` : d}</div>
         <div class="cal-events">
           ${dayActions.map(a => {
             const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
@@ -368,6 +373,7 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
     const mStr = String(day.getMonth() + 1).padStart(2, '0');
     const dStr = String(day.getDate()).padStart(2, '0');
     const isoDay = `${yStr}-${mStr}-${dStr}`;
+    const isToday = isoDay === new Date().toISOString().split('T')[0];
 
     const dayActions = filtered.filter(a => {
       if (!a.data) return false;
@@ -379,10 +385,10 @@ export function renderWeeklyCalendar(acoes, filter = {}) {
     const isSunday = day.getDay() === 0;
 
     return `
-      <div class="week-col ${isSunday ? 'sunday' : ''}">
+      <div class="week-col ${isSunday ? 'sunday' : ''} ${isToday ? 'today' : ''}">
         <div class="week-col-header">
           <div class="week-day-name">${dayName}</div>
-          <div class="week-day-num">${day.getDate()}/${day.getMonth() + 1}</div>
+          <div class="week-day-num">${isToday ? `📍 Hoje (${day.getDate()}/${day.getMonth() + 1})` : `${day.getDate()}/${day.getMonth() + 1}`}</div>
         </div>
         <div class="week-col-events">
           ${dayActions.length ? dayActions.map(a => {
@@ -523,10 +529,11 @@ export function renderRoadToElection(acoes, filter = {}) {
       });
 
       const isElectionDay = isoDay === '2026-10-06';
-      const dayBadge = isElectionDay ? '🗳️ 06/10 - ELEIÇÃO' : `${cur.getDate()}/${cur.getMonth() + 1}`;
+      const isToday = isoDay === new Date().toISOString().split('T')[0];
+      const dayBadge = isElectionDay ? '🗳️ 06/10 - ELEIÇÃO' : isToday ? `📍 Hoje (${cur.getDate()}/${cur.getMonth() + 1})` : `${cur.getDate()}/${cur.getMonth() + 1}`;
 
       cellsHtml += `
-        <div class="cal-day ${dayActions.length ? 'has-events' : ''} ${isElectionDay ? 'election-day' : ''}">
+        <div class="cal-day ${dayActions.length ? 'has-events' : ''} ${isElectionDay ? 'election-day' : ''} ${isToday ? 'today' : ''}">
           <div class="cal-day-num">${dayBadge}</div>
           <div class="cal-events">
             ${dayActions.map(a => {
