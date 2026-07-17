@@ -348,10 +348,11 @@ td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
 .road-phase-title { font-size: 18px; font-weight: 800; }
 .road-phase-span { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .road-phase-count { font-size: 12px; font-weight: 600; color: var(--text2); background: var(--bg); padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); }
-.road-phase-days { display: flex; flex-direction: column; gap: 18px; }
-.road-day-group { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
-.road-day-header { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.03); border-left: 3px solid #60a5fa; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #93c5fd; }
-.road-day-icon { font-size: 15px; }
+.road-phase-calendars { display: flex; flex-direction: column; gap: 24px; }
+.road-month-block { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.road-month-title { font-size: 14px; font-weight: 800; color: #fff; background: rgba(255,255,255,.03); padding: 8px 14px; border-radius: 8px; border-left: 3px solid #60a5fa; letter-spacing: .02em; }
+.cal-day.election-day { border: 2px solid #ef4444 !important; background: rgba(239,68,68,.1) !important; }
+.cal-day.election-day .cal-day-num { color: #f87171 !important; font-size: 12px !important; }
 .road-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .road-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; }
 .road-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.3); }

@@ -499,52 +499,64 @@ export function renderRoadToElection(acoes, filter = {}) {
     `;
   }
 
-  function renderRoadGroup(title, list, color, dateSpan) {
-    if (!list.length) {
-      return `
-        <div class="road-phase" style="border-top:3px solid ${color}">
-          <div class="road-phase-header">
-            <div>
-              <div class="road-phase-title" style="color:${color}">${title}</div>
-              <div class="road-phase-span">${dateSpan}</div>
-            </div>
-            <div class="road-phase-count">0 agendadas</div>
-          </div>
-          <div class="road-empty">Nenhuma ação cadastrada para este período ainda.</div>
-        </div>
-      `;
+  function renderSubPeriodCalendar(startStr, endStr, subTitle, list) {
+    const startDate = new Date(startStr + 'T12:00:00');
+    const endDate = new Date(endStr + 'T12:00:00');
+    const startWeekDay = startDate.getDay(); // 0 = Dom
+
+    let cellsHtml = '';
+    for (let i = 0; i < startWeekDay; i++) {
+      cellsHtml += `<div class="cal-day empty"></div>`;
     }
 
-    // Ordenar cronologicamente por data
-    const sorted = [...list].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    const cur = new Date(startDate);
+    while (cur <= endDate) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, '0');
+      const d = String(cur.getDate()).padStart(2, '0');
+      const isoDay = `${y}-${m}-${d}`;
 
-    // Agrupar por dia (YYYY-MM-DD)
-    const byDay = {};
-    sorted.forEach(a => {
-      const rawDate = (a.data || '').split(' ')[0].split('T')[0];
-      if (!byDay[rawDate]) byDay[rawDate] = [];
-      byDay[rawDate].push(a);
-    });
+      const dayActions = list.filter(a => {
+        if (!a.data) return false;
+        const raw = a.data.split(' ')[0].split('T')[0];
+        return raw === isoDay;
+      });
 
-    const dayGroupsHtml = Object.keys(byDay).map(rawDate => {
-      const dayActions = byDay[rawDate];
-      const [y, m, d] = rawDate.split('-').map(Number);
-      const dateObj = new Date(y, m - 1, d, 12, 0, 0);
-      const weekdayStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
-      const dayFormatted = `${weekdayStr.charAt(0).toUpperCase() + weekdayStr.slice(1)}, ${fmtDate(rawDate)}`;
+      const isElectionDay = isoDay === '2026-10-06';
+      const dayBadge = isElectionDay ? '🗳️ 06/10 - ELEIÇÃO' : `${cur.getDate()}/${cur.getMonth() + 1}`;
 
-      return `
-        <div class="road-day-group">
-          <div class="road-day-header">
-            <span class="road-day-icon">📅</span>
-            <span class="road-day-title">${dayFormatted}</span>
-          </div>
-          <div class="road-cards">
-            ${dayActions.map(a => renderCard(a)).join('')}
+      cellsHtml += `
+        <div class="cal-day ${dayActions.length ? 'has-events' : ''} ${isElectionDay ? 'election-day' : ''}">
+          <div class="cal-day-num">${dayBadge}</div>
+          <div class="cal-events">
+            ${dayActions.map(a => {
+              const stCol = a.status === 'Realizada' ? '#22c55e' : a.status === 'Confirmada' ? '#10b981' : a.status === 'Em Construção' ? '#f59e0b' : '#3b82f6';
+              const prioCfg = getPrioridadeConfig(a.prioridade);
+              return `<div class="cal-event-chip" style="border-left:3px solid ${stCol}" data-id="${a.id}" title="${a.descricao} (${prioCfg.text})">
+                <span class="cal-event-prio-tag">${prioCfg.icon}</span> <span class="cal-event-chip-title">${a.descricao}</span>
+              </div>`;
+            }).join('')}
           </div>
         </div>
       `;
-    }).join('');
+
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    return `
+      <div class="road-month-block">
+        <div class="road-month-title">${subTitle}</div>
+        <div class="cal-grid">
+          <div class="cal-weekday">Dom</div><div class="cal-weekday">Seg</div><div class="cal-weekday">Ter</div>
+          <div class="cal-weekday">Qua</div><div class="cal-weekday">Qui</div><div class="cal-weekday">Sex</div><div class="cal-weekday">Sáb</div>
+          ${cellsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRoadGroup(title, list, color, dateSpan, subPeriods) {
+    const subPeriodsHtml = subPeriods.map(sp => renderSubPeriodCalendar(sp.start, sp.end, sp.title, list)).join('');
 
     return `
       <div class="road-phase" style="border-top:3px solid ${color}">
@@ -555,8 +567,8 @@ export function renderRoadToElection(acoes, filter = {}) {
           </div>
           <div class="road-phase-count">${list.length} agendadas</div>
         </div>
-        <div class="road-phase-days">
-          ${dayGroupsHtml}
+        <div class="road-phase-calendars">
+          ${subPeriodsHtml}
         </div>
       </div>
     `;
@@ -586,9 +598,18 @@ export function renderRoadToElection(acoes, filter = {}) {
     </div>
 
     <div class="road-grid">
-      ${renderRoadGroup('🟢 Fase 1: Pré-Campanha', preCampanha, '#22c55e', 'Até 15 de Agosto')}
-      ${renderRoadGroup('🟠 Fase 2: Campanha Ativa', campanha, '#f97316', '15 de Agosto a 18 de Setembro')}
-      ${renderRoadGroup('🔴 Fase 3: Reta Final Decisiva', retaFinal, '#ef4444', '19 de Setembro até 06 de Outubro')}
+      ${renderRoadGroup('🟢 Fase 1: Pré-Campanha', preCampanha, '#22c55e', 'Até 15 de Agosto', [
+        { start: '2026-07-01', end: '2026-07-31', title: '📅 Julho de 2026' },
+        { start: '2026-08-01', end: '2026-08-15', title: '📅 Agosto de 2026 — 1ª Quinzena (Até 15/08)' }
+      ])}
+      ${renderRoadGroup('🟠 Fase 2: Campanha Ativa', campanha, '#f97316', '16 de Agosto a 18 de Setembro', [
+        { start: '2026-08-16', end: '2026-08-31', title: '📅 Agosto de 2026 — 2ª Quinzena (16/08 a 31/08)' },
+        { start: '2026-09-01', end: '2026-09-18', title: '📅 Setembro de 2026 — 1ª Parte (Até 18/09)' }
+      ])}
+      ${renderRoadGroup('🔴 Fase 3: Reta Final Decisiva', retaFinal, '#ef4444', '19 de Setembro até 06 de Outubro', [
+        { start: '2026-09-19', end: '2026-09-30', title: '📅 Setembro de 2026 — Reta Final (19/09 a 30/09)' },
+        { start: '2026-10-01', end: '2026-10-06', title: '🗳️ Outubro de 2026 — Até a Eleição (01/10 a 06/10)' }
+      ])}
     </div>
 
     ${semData.length ? `
@@ -607,7 +628,7 @@ export function renderRoadToElection(acoes, filter = {}) {
     ` : ''}
   `;
 
-  container.querySelectorAll('.road-card').forEach(el => {
+  container.querySelectorAll('.cal-event-chip, .road-card').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
       const acao = acoes.find(a => a.id === id);
