@@ -234,11 +234,18 @@ tr[data-status="Confirmada"],
 .week-event-card[data-status="Confirmada"],
 .road-card[data-status="Confirmada"],
 .sugestao-card[data-status="Confirmada"] {
-  border-left: 4px solid #10b981 !important;
-  border-top: 2px solid #10b981 !important;
-  border-bottom: 2px solid #10b981 !important;
-  border-right: 1px dashed rgba(16, 185, 129, 0.45) !important;
-  background: rgba(16, 185, 129, 0.08) !important;
+  border-left: 4px dashed #10b981 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  background-color: transparent !important;
+}
+.week-event-card[data-status="Confirmada"],
+.road-card[data-status="Confirmada"],
+.sugestao-card[data-status="Confirmada"] {
+  border-top: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-right: 1px solid var(--border) !important;
 }
 
 /* ── Badges ── */
@@ -264,6 +271,10 @@ tr[data-status="Confirmada"],
 .search-input:focus { border-color: var(--green2); } .search-input::placeholder { color: var(--muted); }
 .filter-select { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-size: 12px; font-family: inherit; outline: none; cursor: pointer; transition: border-color .2s; }
 .filter-select:focus { border-color: var(--green2); }
+.filter-toggle { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; user-select: none; transition: border-color .2s; }
+.filter-toggle:hover { border-color: var(--border2); color: var(--text); }
+.filter-toggle input[type="checkbox"] { cursor: pointer; width: 15px; height: 15px; accent-color: #22c55e; }
+[data-theme="light"] .filter-toggle { background: #ffffff; border-color: #cbd5e1; color: #0f172a; }
 .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 36px; animation: fade-up .5s .4s ease both; }
 table { width: 100%; border-collapse: collapse; }
 thead { background: var(--card2); }

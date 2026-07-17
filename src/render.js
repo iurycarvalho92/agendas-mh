@@ -163,16 +163,53 @@ export function renderCharts(acoes) {
 
 // ── Sugestões ──────────────────────────────────────────────────────────────────
 
+let _allSugestoes = [];
+let _sugestoesFilterState = { exibe: 'all', hideRealizada: true, prioridade: '', tipo: '' };
+
 export function renderSugestoesSemData(acoes) {
-  const sugestoes = acoes.filter(a => !a.data || a.status === 'Sugerida' || a.status === 'Em Construção');
+  _allSugestoes = acoes;
+  applySugestoesFilter();
+}
+
+export function applySugestoesFilter() {
   const grid = document.getElementById('sugestoes-grid');
   if (!grid) return;
-  if (!sugestoes.length) {
-    grid.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:24px 0">Nenhuma agenda sugerida, em confirmação ou sem data no momento.</div>';
+
+  const exibe = _sugestoesFilterState.exibe || 'all';
+  const hideRealizada = _sugestoesFilterState.hideRealizada !== false;
+  const prioridade = _sugestoesFilterState.prioridade || '';
+  const tipo = _sugestoesFilterState.tipo || '';
+
+  const filtered = _allSugestoes.filter(a => {
+    // 1. Filtro base: ou é Sugerida, Em Construção, Confirmada, ou sem data
+    const isBaseCandidate = !a.data || a.status === 'Sugerida' || a.status === 'Em Construção' || a.status === 'Confirmada';
+    if (!isBaseCandidate) return false;
+
+    // 2. Ocultar realizadas e canceladas se o toggle estiver ligado
+    if (hideRealizada && (a.status === 'Realizada' || a.status === 'Cancelada')) return false;
+
+    // 3. Filtro por opção de exibição
+    if (exibe === 'sugerida' && a.status !== 'Sugerida') return false;
+    if (exibe === 'em-construcao' && a.status !== 'Em Construção') return false;
+    if (exibe === 'confirmada' && a.status !== 'Confirmada') return false;
+    if (exibe === 'sem-data' && a.data && a.data.trim() !== '') return false;
+
+    // 4. Prioridade e Tipo
+    if (prioridade && (a.prioridade || 'media').toLowerCase() !== prioridade) return false;
+    if (tipo && a.tipo !== tipo) return false;
+
+    return true;
+  });
+
+  const countEl = document.getElementById('sugestoes-count');
+  if (countEl) countEl.textContent = `${filtered.length} agenda(s)`;
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:24px 0">Nenhuma agenda encontrada com os filtros selecionados.</div>';
     return;
   }
 
-  grid.innerHTML = sugestoes.map((a, i) => {
+  grid.innerHTML = filtered.map((a, i) => {
     return `
       <div class="sugestao-card" style="animation-delay:${i * 0.05}s" data-status="${a.status || ''}" data-id="${a.id || i}">
         <div class="sugestao-card-top">
@@ -191,28 +228,40 @@ export function renderSugestoesSemData(acoes) {
   }).join('');
 
   grid.querySelectorAll('.sugestao-card').forEach((card, i) => {
-    card.addEventListener('click', () => openViewModal(sugestoes[i]));
+    card.addEventListener('click', () => openViewModal(filtered[i]));
   });
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
 
 let _allAcoes = [];
-let _filterState = {};
+let _filterState = { filterFromToday: true };
 
 export function renderTable(acoes, filter = {}) {
   _allAcoes = acoes;
-  applyFilter(filter);
+  _filterState = { ..._filterState, ...filter };
+  applyFilter(_filterState);
 }
 
 export function applyFilter(filter = {}) {
-  _filterState = filter;
-  const search = (filter.search || '').toLowerCase();
-  const tipo = filter.tipo || '';
-  const status = filter.status || '';
-  const prioridade = filter.prioridade || '';
+  _filterState = { ..._filterState, ...filter };
+  const search = (_filterState.search || '').toLowerCase();
+  const tipo = _filterState.tipo || '';
+  const status = _filterState.status || '';
+  const prioridade = _filterState.prioridade || '';
+  const filterFromToday = _filterState.filterFromToday !== false;
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const filtered = _allAcoes.filter(a => {
+    if (filterFromToday) {
+      if (a.status === 'Realizada' || a.status === 'Cancelada') return false;
+      if (a.data) {
+        const rawDate = a.data.split(' ')[0].split('T')[0];
+        if (rawDate < todayStr) return false;
+      }
+    }
+
     const catsStr = (a.categorias || []).join(' ').toLowerCase();
     const mS = !search || (a.descricao || '').toLowerCase().includes(search) || (a.local || '').toLowerCase().includes(search) || catsStr.includes(search);
     const mPrio = !prioridade || (a.prioridade || 'media').toLowerCase() === prioridade;
@@ -223,7 +272,7 @@ export function applyFilter(filter = {}) {
   if (!tbody) return;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="no-data">Nenhuma ação encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data">Nenhuma ação encontrada para estes filtros.</td></tr>';
     return;
   }
 
@@ -251,6 +300,7 @@ export function setupFilters(acoes, onFilterChange) {
   const filterTipo = document.getElementById('filter-tipo');
   const filterStatus = document.getElementById('filter-status');
   const filterPrioridade = document.getElementById('filter-prioridade');
+  const filterFromToday = document.getElementById('filter-from-today');
 
   if (searchInput) {
     searchInput.oninput = e => {
@@ -279,6 +329,34 @@ export function setupFilters(acoes, onFilterChange) {
       applyFilter(_filterState);
       if (onFilterChange) onFilterChange(_allAcoes, _filterState);
     };
+  }
+  if (filterFromToday) {
+    _filterState.filterFromToday = filterFromToday.checked;
+    filterFromToday.onchange = e => {
+      _filterState.filterFromToday = e.target.checked;
+      applyFilter(_filterState);
+      if (onFilterChange) onFilterChange(_allAcoes, _filterState);
+    };
+  }
+
+  // Bind Sugestões Controls
+  const sugExibe = document.getElementById('sug-filter-exibe');
+  const sugPrioridade = document.getElementById('sug-filter-prioridade');
+  const sugTipo = document.getElementById('sug-filter-tipo');
+  const sugHideRealizada = document.getElementById('sug-filter-hide-realizada');
+
+  if (sugExibe) {
+    sugExibe.onchange = e => { _sugestoesFilterState.exibe = e.target.value; applySugestoesFilter(); };
+  }
+  if (sugPrioridade) {
+    sugPrioridade.onchange = e => { _sugestoesFilterState.prioridade = e.target.value; applySugestoesFilter(); };
+  }
+  if (sugTipo) {
+    sugTipo.onchange = e => { _sugestoesFilterState.tipo = e.target.value; applySugestoesFilter(); };
+  }
+  if (sugHideRealizada) {
+    _sugestoesFilterState.hideRealizada = sugHideRealizada.checked;
+    sugHideRealizada.onchange = e => { _sugestoesFilterState.hideRealizada = e.target.checked; applySugestoesFilter(); };
   }
 
   const modalClose = document.getElementById('modal-close');

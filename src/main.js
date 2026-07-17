@@ -137,7 +137,33 @@ app.innerHTML = `
         <div class="chart-card"><div class="chart-card-title">🗂️ Ações por Categoria <span class="chip">Multi-categoria</span></div><div class="chart-wrap"><canvas id="chart-categoria"></canvas></div></div>
       </div>
 
-      <div class="section-title">💡 Agendas Sugeridas, Em Confirmação & Sem Data</div>
+      <div class="section-header-row" style="margin-top:28px">
+        <div class="section-title" style="margin:0">💡 Agendas Sugeridas, Em Confirmação & Sem Data</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600" id="sugestoes-count"></div>
+      </div>
+      <div class="table-controls" id="sugestoes-controls" style="margin-bottom:16px;">
+        <select class="filter-select" id="sug-filter-exibe">
+          <option value="all">Exibir: Todas (Sugeridas, Em Confirmação, Sem Data)</option>
+          <option value="sugerida">💡 Apenas Sugeridas</option>
+          <option value="em-construcao">🛠️ Apenas Em Construção / Em Confirmação</option>
+          <option value="confirmada">✅ Apenas Confirmadas</option>
+          <option value="sem-data">🗓️ Apenas Sem Data definida</option>
+        </select>
+        <select class="filter-select" id="sug-filter-prioridade">
+          <option value="">Prioridade: Todas</option>
+          <option value="alta">🔥 Alta</option>
+          <option value="media">⚡ Média</option>
+          <option value="baixa">🍃 Baixa</option>
+        </select>
+        <select class="filter-select" id="sug-filter-tipo">
+          <option value="">Tipo: Todos</option>
+          <option>Mobilização</option><option>Relacionamento</option><option>Participação em Eventos</option><option>Comunicação</option><option>Território</option>
+        </select>
+        <label class="filter-toggle" title="Esconder agendas já realizadas ou canceladas">
+          <input type="checkbox" id="sug-filter-hide-realizada" checked />
+          <span>🚫 Ocultar realizadas/canceladas</span>
+        </label>
+      </div>
       <div class="sugestoes-grid" id="sugestoes-grid"></div>
 
       <div class="section-header-row" style="margin-top:32px">
@@ -169,6 +195,10 @@ app.innerHTML = `
           <option value="">Todos os status</option>
           <option>Sugerida</option><option>Em Construção</option><option>Confirmada</option><option>Realizada</option><option>Adiada</option><option>Cancelada</option>
         </select>
+        <label class="filter-toggle" title="Esconder agendas passadas ou já concluídas">
+          <input type="checkbox" id="filter-from-today" checked />
+          <span>🗓️ A partir de hoje</span>
+        </label>
       </div>
 
       <div id="view-lista" class="view-container active">
